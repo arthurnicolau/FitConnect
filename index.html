@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitConnect - Conecte-se para se exercitar</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Welcome Screen -->
+    <section id="welcome" class="screen active auth-screen">
+        <div class="welcome-container">
+            <div class="welcome-header">
+                <div class="app-logo">
+                    <span class="logo-icon">🏃‍♂️</span>
+                    <h1>FitConnect</h1>
+                </div>
+                <p class="tagline">Conecte-se para se exercitar</p>
+            </div>
+            <div class="welcome-graphic">
+                <div class="fitness-icons">
+                    <span class="fitness-icon">🏃‍♂️</span>
+                    <span class="fitness-icon">🚴‍♀️</span>
+                    <span class="fitness-icon">🧘‍♂️</span>
+                    <span class="fitness-icon">⚽</span>
+                    <span class="fitness-icon">🏊‍♀️</span>
+                </div>
+            </div>
+            <div class="welcome-actions">
+                <button class="btn btn--primary btn--lg btn--full-width" onclick="showScreen('login')">
+                    Entrar
+                </button>
+                <button class="btn btn--outline btn--lg btn--full-width" onclick="showScreen('register')">
+                    Cadastrar
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Login Screen -->
+    <section id="login" class="screen auth-screen">
+        <div class="auth-container">
+            <div class="auth-header">
+                <button class="back-btn" onclick="showScreen('welcome')">←</button>
+                <div class="app-logo-small">
+                    <span class="logo-icon">🏃‍♂️</span>
+                    <h2>FitConnect</h2>
+                </div>
+            </div>
+            <div class="auth-form">
+                <h3>Entre na sua conta</h3>
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" class="form-control" placeholder="seu@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Senha</label>
+                        <input type="password" id="loginPassword" class="form-control" placeholder="Sua senha" required>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="rememberMe">
+                        <label for="rememberMe">Lembrar de mim</label>
+                    </div>
+                    <button type="submit" class="btn btn--primary btn--lg btn--full-width">
+                        Entrar
+                    </button>
+                </form>
+                <div class="auth-links">
+                    <a href="#" class="link">Esqueci minha senha</a>
+                    <p>Ainda não tem conta? <a href="#" onclick="showScreen('register')" class="link">Cadastre-se</a></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Register Screen -->
+    <section id="register" class="screen auth-screen">
+        <div class="auth-container">
+            <div class="auth-header">
+                <button class="back-btn" onclick="showScreen('welcome')">←</button>
+                <div class="app-logo-small">
+                    <span class="logo-icon">🏃‍♂️</span>
+                    <h2>FitConnect</h2>
+                </div>
+            </div>
+            <div class="auth-form">
+                <h3>Crie sua conta</h3>
+                <form id="registerForm" onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label for="registerName">Nome completo</label>
+                        <input type="text" id="registerName" class="form-control" placeholder="Seu nome completo" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" class="form-control" placeholder="seu@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Senha</label>
+                        <input type="password" id="registerPassword" class="form-control" placeholder="Crie uma senha" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirmar senha</label>
+                        <input type="password" id="confirmPassword" class="form-control" placeholder="Confirme sua senha" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerCity">Cidade</label>
+                        <input type="text" id="registerCity" class="form-control" placeholder="Sua cidade" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerLevel">Nível de experiência</label>
+                        <select id="registerLevel" class="form-control" required>
+                            <option value="">Selecione seu nível</option>
+                            <option value="iniciante">Iniciante</option>
+                            <option value="intermediário">Intermediário</option>
+                            <option value="avançado">Avançado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerGender">Gênero</label>
+                        <select id="registerGender" class="form-control" required>
+                            <option value="">Selecione seu gênero</option>
+                            <option value="masculino">Masculino</option>
+                            <option value="feminino">Feminino</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="acceptTerms" required>
+                        <label for="acceptTerms">Aceito os termos de uso</label>
+                    </div>
+                    <button type="submit" class="btn btn--primary btn--lg btn--full-width">
+                        Cadastrar
+                    </button>
+                </form>
+                <div class="auth-links">
+                    <p>Já tem conta? <a href="#" onclick="showScreen('login')" class="link">Faça login</a></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main App Container (only visible after login) -->
+    <div id="mainApp" class="main-app hidden">
+        <!-- Top Navigation -->
+        <header class="top-nav">
+            <div class="nav-content">
+                <div class="logo">
+                    <span class="logo-icon">🏃‍♂️</span>
+                    <h1>FitConnect</h1>
+                </div>
+                <div class="profile-avatar" onclick="showScreen('profile')">
+                    <span class="avatar-icon">👤</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Container -->
+        <main class="main-content">
+            <!-- Home Screen -->
+            <section id="home" class="screen active">
+                <div class="screen-header">
+                    <h2>Atividades Próximas</h2>
+                    <button class="btn btn--primary create-btn" onclick="showCreateActivity()">
+                        <span>+</span> Criar Atividade
+                    </button>
+                </div>
+                <div class="activity-feed" id="activityFeed">
+                    <!-- Activities will be dynamically loaded here -->
+                </div>
+            </section>
+
+            <!-- Search Screen -->
+            <section id="search" class="screen">
+                <div class="search-container">
+                    <div class="search-bar">
+                        <input type="text" placeholder="Buscar atividades..." class="form-control" id="searchInput">
+                        <button class="search-btn">🔍</button>
+                    </div>
+
+                    <div class="filters">
+                        <h3>Filtros</h3>
+                        <div class="filter-section">
+                            <h4>Tipo de Atividade</h4>
+                            <div class="filter-chips" id="activityFilters">
+                                <!-- Activity type filters will be loaded here -->
+                            </div>
+                        </div>
+
+                        <div class="filter-section">
+                            <h4>Horário</h4>
+                            <div class="filter-chips" id="timeFilters">
+                                <div class="filter-chip" data-filter="time" data-value="manhã">Manhã</div>
+                                <div class="filter-chip" data-filter="time" data-value="tarde">Tarde</div>
+                                <div class="filter-chip" data-filter="time" data-value="noite">Noite</div>
+                            </div>
+                        </div>
+
+                        <div class="filter-section">
+                            <h4>Nível</h4>
+                            <div class="filter-chips" id="levelFilters">
+                                <div class="filter-chip" data-filter="level" data-value="iniciante">Iniciante</div>
+                                <div class="filter-chip" data-filter="level" data-value="intermediário">Intermediário</div>
+                                <div class="filter-chip" data-filter="level" data-value="avançado">Avançado</div>
+                            </div>
+                        </div>
+
+                        <div class="filter-section">
+                            <h4>Gênero</h4>
+                            <div class="filter-chips" id="genderFilters">
+                                <div class="filter-chip" data-filter="gender" data-value="todos">⚥ Todos</div>
+                                <div class="filter-chip" data-filter="gender" data-value="masculino">♂️ Masculino</div>
+                                <div class="filter-chip" data-filter="gender" data-value="feminino">♀️ Feminino</div>
+                                <div class="filter-chip" data-filter="gender" data-value="misto">👥 Misto</div>
+                            </div>
+                        </div>
+
+                        <div class="filter-section">
+                            <h4>Idade</h4>
+                            <div class="filter-chips" id="ageFilters">
+                                <div class="filter-chip" data-filter="age" data-value="todas">📅 Todas</div>
+                                <div class="filter-chip" data-filter="age" data-value="18-25">🎓 18-25</div>
+                                <div class="filter-chip" data-filter="age" data-value="26-35">💼 26-35</div>
+                                <div class="filter-chip" data-filter="age" data-value="36-45">👨‍👩‍👧‍👦 36-45</div>
+                                <div class="filter-chip" data-filter="age" data-value="46-55">🧑‍🦳 46-55</div>
+                                <div class="filter-chip" data-filter="age" data-value="55+">👴 55+</div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn--outline clear-filters-btn" onclick="clearAllFilters()">
+                            Limpar Filtros
+                        </button>
+                    </div>
+
+                    <div class="search-results" id="searchResults">
+                        <!-- Search results will be displayed here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Activity Detail Screen -->
+            <section id="activityDetail" class="screen">
+                <div class="detail-container">
+                    <div class="detail-header">
+                        <button class="back-btn" onclick="goBack()">←</button>
+                        <h2>Detalhes da Atividade</h2>
+                    </div>
+                    <div class="detail-content" id="detailContent">
+                        <!-- Activity details will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Profile Screen -->
+            <section id="profile" class="screen">
+                <div class="profile-container">
+                    <div class="profile-header">
+                        <div class="profile-avatar-large">
+                            <span class="avatar-icon-large">👤</span>
+                        </div>
+                        <h2 id="profileName">Pedro Oliveira</h2>
+                        <p id="profileBio">Apaixonado por esportes e vida saudável</p>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>Preferências Esportivas</h3>
+                        <div class="preference-tags" id="preferenceTags">
+                            <!-- Preference tags will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>Estatísticas</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-number">24</span>
+                                <span class="stat-label">Atividades</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">185</span>
+                                <span class="stat-label">Km percorridos</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">12</span>
+                                <span class="stat-label">Amigos</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>Histórico de Atividades</h3>
+                        <div class="activity-history" id="activityHistory">
+                            <!-- Activity history will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div class="profile-actions">
+                        <button class="btn btn--outline btn--full-width" onclick="logout()">
+                            Sair da Conta
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chat Screen -->
+            <section id="chat" class="screen">
+                <div class="chat-container">
+                    <div class="screen-header">
+                        <h2>Conversas</h2>
+                    </div>
+                    <div class="chat-list" id="chatList">
+                        <!-- Chat list will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Notifications Screen -->
+            <section id="notifications" class="screen">
+                <div class="notifications-container">
+                    <div class="screen-header">
+                        <h2>Notificações</h2>
+                    </div>
+                    <div class="notifications-list" id="notificationsList">
+                        <!-- Notifications will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Create Activity Modal -->
+            <div id="createActivityModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Criar Nova Atividade</h3>
+                        <button class="close-btn" onclick="closeCreateActivity()">&times;</button>
+                    </div>
+                    <form id="createActivityForm" onsubmit="handleCreateActivity(event)">
+                        <div class="form-group">
+                            <label for="activityTitle">Título da Atividade</label>
+                            <input type="text" id="activityTitle" class="form-control" placeholder="Ex: Corrida no Parque" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="activityType">Tipo de Atividade</label>
+                            <select id="activityType" class="form-control" required>
+                                <option value="">Selecione o tipo</option>
+                                <option value="corrida">🏃 Corrida</option>
+                                <option value="caminhada">🚶 Caminhada</option>
+                                <option value="ciclismo">🚴 Ciclismo</option>
+                                <option value="yoga">🧘 Yoga</option>
+                                <option value="esportes coletivos">⚽ Esportes Coletivos</option>
+                                <option value="natação">🏊 Natação</option>
+                                <option value="musculação">🏋️ Musculação</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="activityDate">Data</label>
+                            <input type="date" id="activityDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="activityTime">Horário</label>
+                            <input type="time" id="activityTime" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="activityLocation">Local</label>
+                            <input type="text" id="activityLocation" class="form-control" placeholder="Ex: Parque Ibirapuera" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="activityLevel">Nível</label>
+                            <select id="activityLevel" class="form-control" required>
+                                <option value="">Selecione o nível</option>
+                                <option value="iniciante">Iniciante</option>
+                                <option value="intermediário">Intermediário</option>
+                                <option value="avançado">Avançado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="activityGender">Gênero</label>
+                            <select id="activityGender" class="form-control" required>
+                                <option value="">Selecione o gênero</option>
+                                <option value="todos">⚥ Todos</option>
+                                <option value="masculino">♂️ Masculino</option>
+                                <option value="feminino">♀️ Feminino</option>
+                                <option value="misto">👥 Misto</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="activityAge">Faixa Etária</label>
+                            <select id="activityAge" class="form-control" required>
+                                <option value="">Selecione a faixa etária</option>
+                                <option value="todas">📅 Todas as idades</option>
+                                <option value="18-25">🎓 18-25 anos</option>
+                                <option value="26-35">💼 26-35 anos</option>
+                                <option value="36-45">👨‍👩‍👧‍👦 36-45 anos</option>
+                                <option value="46-55">🧑‍🦳 46-55 anos</option>
+                                <option value="55+">👴 55+ anos</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="maxParticipants">Número máximo de participantes</label>
+                            <input type="number" id="maxParticipants" class="form-control" min="2" max="50" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="activityDescription">Descrição</label>
+                            <textarea id="activityDescription" class="form-control" rows="3" placeholder="Descreva a atividade..." required></textarea>
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn btn--outline" onclick="closeCreateActivity()">Cancelar</button>
+                            <button type="submit" class="btn btn--primary">Criar Atividade</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="showScreen('home')" data-screen="home">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Início</span>
+            </button>
+            <button class="nav-item" onclick="showScreen('search')" data-screen="search">
+                <span class="nav-icon">🔍</span>
+                <span class="nav-label">Buscar</span>
+            </button>
+            <button class="nav-item" onclick="showScreen('chat')" data-screen="chat">
+                <span class="nav-icon">💬</span>
+                <span class="nav-label">Chat</span>
+            </button>
+            <button class="nav-item" onclick="showScreen('notifications')" data-screen="notifications">
+                <span class="nav-icon">🔔</span>
+                <span class="nav-label">Notificações</span>
+            </button>
+            <button class="nav-item" onclick="showScreen('profile')" data-screen="profile">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Perfil</span>
+            </button>
+        </nav>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
