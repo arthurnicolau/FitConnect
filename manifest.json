@@ -1,0 +1,20 @@
+{
+  "name": "FitConnect",
+  "short_name": "FitConnect",
+  "description": "Encontre parceiros para treinar perto de você",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#10B981",
+  "theme_color": "#059669",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

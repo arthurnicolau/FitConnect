@@ -1,25 +1,61 @@
 // FitConnect Mobile App JavaScript
+// Prototype: all data is simulated and kept in memory.
 
 // App State
-let currentUser = null;
-let isAuthenticated = false;
-let currentScreen = 'welcome';
-let activeFilters = {
-  type: [],
-  time: [],
-  level: [],
-  gender: [],
-  age: []
+const state = {
+  user: null,
+  screen: 'welcome',
+  history: [],
+  homeType: 'todas',
+  search: '',
+  filters: emptyFilters()
 };
 
-// App Data
+function emptyFilters() {
+  return { type: [], time: [], level: [], gender: [], age: [] };
+}
+
+// Screen config: auth screens live outside the main app; tab screens reset
+// the back stack; "back" screens hide the tab bar and show a back button.
+const screens = {
+  welcome: { auth: true },
+  login: { auth: true },
+  register: { auth: true },
+  home: { tab: 'home' },
+  search: { tab: 'search', title: 'Buscar atividades' },
+  chat: { tab: 'chat', title: 'Conversas' },
+  profile: { tab: 'profile', title: 'Meu perfil' },
+  notifications: { back: true, title: 'Notificações' },
+  activityDetail: { back: true, title: 'Atividade' }
+};
+
+// Date helpers (local time, avoids the UTC off-by-one of new Date('YYYY-MM-DD'))
+function toISODate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function parseISODate(value) {
+  const [y, m, d] = value.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function daysFromNow(days) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return toISODate(date);
+}
+
+// App Data (sample dates are relative to today so the feed never goes stale)
 const appData = {
   activities: [
     {
       id: 1,
       title: "Corrida Matinal no Parque",
       type: "corrida",
-      date: "2025-10-17",
+      date: daysFromNow(1),
       time: "06:00",
       location: "Parque Ibirapuera, São Paulo",
       participants: 12,
@@ -28,14 +64,13 @@ const appData = {
       gender: "misto",
       ageRange: "26-35",
       description: "Corrida de 5km no Parque Ibirapuera. Ritmo moderado, ideal para quem já tem experiência.",
-      host: "Ana Silva",
-      image: "🏃"
+      host: "Ana Silva"
     },
     {
       id: 2,
       title: "Yoga ao Ar Livre",
       type: "yoga",
-      date: "2025-10-18",
+      date: daysFromNow(2),
       time: "07:30",
       location: "Praia de Copacabana, Rio de Janeiro",
       participants: 8,
@@ -44,14 +79,13 @@ const appData = {
       gender: "feminino",
       ageRange: "18-25",
       description: "Sessão de yoga relaxante na praia, perfeito para começar o dia com energia positiva.",
-      host: "Carlos Mendes",
-      image: "🧘"
+      host: "Carlos Mendes"
     },
     {
       id: 3,
       title: "Pedalada Urbana",
       type: "ciclismo",
-      date: "2025-10-19",
+      date: daysFromNow(3),
       time: "08:00",
       location: "Ciclovia da Lagoa, Rio de Janeiro",
       participants: 15,
@@ -60,14 +94,13 @@ const appData = {
       gender: "todos",
       ageRange: "todas",
       description: "Pedalada tranquila pela ciclovia da Lagoa. Ideal para iniciantes e famílias.",
-      host: "Maria Costa",
-      image: "🚴"
+      host: "Maria Costa"
     },
     {
       id: 4,
       title: "Futebol Society",
       type: "esportes coletivos",
-      date: "2025-10-20",
+      date: daysFromNow(0),
       time: "19:00",
       location: "Arena Sport Center, Belo Horizonte",
       participants: 18,
@@ -76,14 +109,13 @@ const appData = {
       gender: "masculino",
       ageRange: "18-25",
       description: "Partida amistosa de futebol society. Venha se divertir e fazer novos amigos!",
-      host: "João Santos",
-      image: "⚽"
+      host: "João Santos"
     },
     {
       id: 5,
       title: "Caminhada Ecológica",
       type: "caminhada",
-      date: "2025-10-21",
+      date: daysFromNow(4),
       time: "15:00",
       location: "Trilha da Tijuca, Rio de Janeiro",
       participants: 6,
@@ -92,14 +124,13 @@ const appData = {
       gender: "misto",
       ageRange: "46-55",
       description: "Caminhada leve pela trilha da Tijuca. Vamos apreciar a natureza juntos!",
-      host: "Fernanda Lima",
-      image: "🚶"
+      host: "Fernanda Lima"
     },
     {
       id: 6,
       title: "Natação para Iniciantes",
       type: "natação",
-      date: "2025-10-22",
+      date: daysFromNow(5),
       time: "09:00",
       location: "Piscina Municipal, Brasília",
       participants: 4,
@@ -108,30 +139,28 @@ const appData = {
       gender: "feminino",
       ageRange: "36-45",
       description: "Aulas de natação para iniciantes em ambiente seguro e acolhedor.",
-      host: "Patricia Santos",
-      image: "🏊"
+      host: "Patricia Santos"
     },
     {
       id: 7,
       title: "Crossfit Avançado",
       type: "musculação",
-      date: "2025-10-23",
+      date: daysFromNow(6),
       time: "18:00",
       location: "Box CrossFit, Porto Alegre",
-      participants: 14,
+      participants: 18,
       maxParticipants: 18,
       level: "avançado",
       gender: "misto",
       ageRange: "26-35",
       description: "Treino intensivo de crossfit para atletas experientes.",
-      host: "Ricardo Lima",
-      image: "🏋️"
+      host: "Ricardo Lima"
     },
     {
       id: 8,
       title: "Vôlei de Praia",
       type: "esportes coletivos",
-      date: "2025-10-24",
+      date: daysFromNow(7),
       time: "16:00",
       location: "Praia de Ipanema, Rio de Janeiro",
       participants: 8,
@@ -140,43 +169,28 @@ const appData = {
       gender: "misto",
       ageRange: "18-25",
       description: "Partida de vôlei de praia com vista para o mar!",
-      host: "Camila Rodrigues",
-      image: "🏐"
+      host: "Camila Rodrigues"
     }
   ],
 
   user: {
     name: "Pedro Oliveira",
     email: "pedro@exemplo.com",
-    photo: "user-avatar",
     bio: "Apaixonado por esportes e vida saudável",
     preferences: ["corrida", "ciclismo", "natação"],
     level: "intermediário",
     city: "São Paulo, SP",
-    birthDate: "1990-05-15",
     gender: "masculino",
     age: 35,
     stats: {
       activitiesJoined: 24,
-      distanceCovered: "185 km",
+      distanceCovered: 185,
       friendsMade: 12
     },
     history: [
-      {
-        activity: "Corrida no Parque",
-        date: "2025-09-15",
-        type: "corrida"
-      },
-      {
-        activity: "Pedalada Zona Sul",
-        date: "2025-09-12",
-        type: "ciclismo"
-      },
-      {
-        activity: "Natação na Urca",
-        date: "2025-09-10",
-        type: "natação"
-      }
+      { activity: "Corrida no Parque", date: daysFromNow(-6), type: "corrida" },
+      { activity: "Pedalada Zona Sul", date: daysFromNow(-9), type: "ciclismo" },
+      { activity: "Natação na Urca", date: daysFromNow(-11), type: "natação" }
     ]
   },
 
@@ -186,7 +200,7 @@ const appData = {
       type: "invite",
       title: "Novo convite para atividade",
       message: "Ana Silva te convidou para 'Corrida Matinal no Parque'",
-      timestamp: "2 horas atrás",
+      timestamp: "2 h",
       read: false
     },
     {
@@ -194,7 +208,7 @@ const appData = {
       type: "reminder",
       title: "Lembrete de atividade",
       message: "Sua atividade 'Yoga ao Ar Livre' começa em 1 hora",
-      timestamp: "1 hora atrás",
+      timestamp: "1 h",
       read: false
     },
     {
@@ -202,7 +216,7 @@ const appData = {
       type: "update",
       title: "Atividade cancelada",
       message: "Infelizmente 'Futebol no Parque' foi cancelado devido ao mau tempo",
-      timestamp: "1 dia atrás",
+      timestamp: "1 d",
       read: true
     }
   ],
@@ -211,40 +225,18 @@ const appData = {
     {
       id: 1,
       groupName: "Corrida Matinal no Parque",
-      lastMessage: "Nos vemos às 6h na entrada principal!",
+      type: "corrida",
+      lastMessage: "Ana: Nos vemos às 6h na entrada principal!",
       timestamp: "10:30",
-      unread: 2,
-      messages: [
-        {
-          sender: "Ana Silva",
-          message: "Pessoal, não esqueçam de levar água!",
-          timestamp: "09:15"
-        },
-        {
-          sender: "Carlos Mendes",
-          message: "Confirmado! Estarei lá.",
-          timestamp: "09:45"
-        },
-        {
-          sender: "Ana Silva",
-          message: "Nos vemos às 6h na entrada principal!",
-          timestamp: "10:30"
-        }
-      ]
+      unread: 2
     },
     {
       id: 2,
       groupName: "Yoga ao Ar Livre",
-      lastMessage: "Que sessão incrível hoje!",
+      type: "yoga",
+      lastMessage: "Maria: Que sessão incrível hoje!",
       timestamp: "08:45",
-      unread: 0,
-      messages: [
-        {
-          sender: "Maria Costa",
-          message: "Que sessão incrível hoje!",
-          timestamp: "08:45"
-        }
-      ]
+      unread: 0
     }
   ],
 
@@ -266,116 +258,139 @@ const appData = {
   ],
 
   ageRanges: [
-    {value: "todas", label: "Todas as idades", icon: "📅"},
-    {value: "18-25", label: "18-25 anos", icon: "🎓"},
-    {value: "26-35", label: "26-35 anos", icon: "💼"},
-    {value: "36-45", label: "36-45 anos", icon: "👨‍👩‍👧‍👦"},
-    {value: "46-55", label: "46-55 anos", icon: "🧑‍🦳"},
-    {value: "55+", label: "55+ anos", icon: "👴"}
+    {value: "todas", label: "Todas as idades"},
+    {value: "18-25", label: "18-25 anos"},
+    {value: "26-35", label: "26-35 anos"},
+    {value: "36-45", label: "36-45 anos"},
+    {value: "46-55", label: "46-55 anos"},
+    {value: "55+", label: "55+ anos"}
   ]
 };
 
 // DOM Content Loaded
-document.addEventListener('DOMContentLoaded', function() {
-  initializeApp();
-});
+document.addEventListener('DOMContentLoaded', initializeApp);
 
-// Initialize App
 function initializeApp() {
-  // Check if user is already logged in (in a real app, this would check localStorage or sessionStorage)
-  // For demo purposes, we start with the welcome screen
+  initializeSearch();
+  startStatusClock();
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeCreateActivity();
+  });
+
   showScreen('welcome');
-
-  // Initialize activity type filters
-  initializeActivityFilters();
-
-  // Load initial data
-  loadActivityFeed();
-  loadUserProfile();
-  loadChatList();
-  loadNotifications();
 }
 
 // Screen Management
-function showScreen(screenId) {
-  // Hide all screens
-  const screens = document.querySelectorAll('.screen');
-  screens.forEach(screen => screen.classList.remove('active'));
+function showScreen(screenId, options = {}) {
+  const config = screens[screenId];
+  if (!config) return;
 
-  // Show target screen
-  const targetScreen = document.getElementById(screenId);
-  if (targetScreen) {
-    targetScreen.classList.add('active');
-    currentScreen = screenId;
+  // Main app screens require a logged-in user
+  if (!config.auth && !state.user) return showScreen('welcome');
 
-    // Update bottom navigation
-    updateBottomNavigation(screenId);
-
-    // Load screen-specific data
-    switch(screenId) {
-      case 'home':
-        loadActivityFeed();
-        break;
-      case 'search':
-        loadSearchResults();
-        break;
-      case 'profile':
-        loadUserProfile();
-        break;
-      case 'chat':
-        loadChatList();
-        break;
-      case 'notifications':
-        loadNotifications();
-        break;
-    }
+  // Back stack: tab/auth screens reset it, pushed screens remember where we came from
+  if (config.back) {
+    if (!options.fromBack && state.screen !== screenId) state.history.push(state.screen);
+  } else {
+    state.history = [];
   }
+  state.screen = screenId;
+
+  document.querySelectorAll('.screen').forEach(screen => {
+    screen.classList.toggle('active', screen.id === screenId);
+  });
+
+  const mainApp = document.getElementById('mainApp');
+  mainApp.classList.toggle('hidden', !!config.auth);
+  mainApp.classList.toggle('no-tabs', !!config.back);
+  document.getElementById('device').classList.toggle('is-auth', !!config.auth);
+
+  if (!config.auth) {
+    updateAppBar(screenId, config);
+    updateTabBar(config.tab);
+    document.getElementById('appContent').scrollTop = 0;
+  }
+
+  // Load screen-specific data
+  switch (screenId) {
+    case 'home': renderHome(); break;
+    case 'search': loadSearchResults(); break;
+    case 'profile': loadUserProfile(); break;
+    case 'chat': loadChatList(); break;
+    case 'notifications': loadNotifications(); break;
+  }
+}
+
+function goBack() {
+  const previous = state.history.pop() || 'home';
+  showScreen(previous, { fromBack: true });
+}
+
+function updateAppBar(screenId, config) {
+  document.getElementById('appBarBack').hidden = !config.back;
+  document.getElementById('appBarLogo').hidden = screenId !== 'home';
+  document.getElementById('appBarTitle').textContent = screenId === 'home' ? '' : (config.title || '');
+  document.getElementById('bellBtn').hidden = screenId === 'notifications';
+  const headerAvatar = document.getElementById('headerAvatar');
+  headerAvatar.hidden = !!config.back || screenId === 'profile';
+  headerAvatar.textContent = initials(state.user.name);
+  updateBadges();
+}
+
+function updateTabBar(activeTab) {
+  document.querySelectorAll('.tab[data-tab]').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.tab === activeTab);
+  });
+}
+
+function updateBadges() {
+  const unreadNotifications = appData.notifications.filter(n => !n.read).length;
+  const bellBadge = document.getElementById('bellBadge');
+  bellBadge.hidden = unreadNotifications === 0;
+  bellBadge.textContent = unreadNotifications;
+
+  const unreadChats = appData.chats.reduce((sum, chat) => sum + chat.unread, 0);
+  const chatBadge = document.getElementById('chatBadge');
+  chatBadge.hidden = unreadChats === 0;
+  chatBadge.textContent = unreadChats;
 }
 
 // Authentication Functions
 function handleLogin(event) {
   event.preventDefault();
 
-  const email = document.getElementById('loginEmail').value;
+  const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
 
-  // Simple validation (in a real app, this would be proper authentication)
-  if (email && password) {
-    // Simulate login success
-    isAuthenticated = true;
-    currentUser = appData.user;
-
-    // Show main app and hide auth screens
-    document.getElementById('mainApp').classList.remove('hidden');
-    document.querySelectorAll('.auth-screen').forEach(screen => {
-      screen.style.display = 'none';
-    });
-
-    // Go to home screen
-    showScreen('home');
-
-    // Show success message
-    showMessage('Login realizado com sucesso!', 'success');
-  } else {
+  // Simulated login: any email/password is accepted until there is a backend
+  if (!email || !password) {
     showMessage('Por favor, preencha todos os campos.', 'error');
+    return;
   }
+
+  enterApp({ ...appData.user, email }, `Bem-vindo de volta, ${firstName(appData.user.name)}!`);
 }
 
 function handleRegister(event) {
   event.preventDefault();
 
-  const name = document.getElementById('registerName').value;
-  const email = document.getElementById('registerEmail').value;
+  const name = document.getElementById('registerName').value.trim();
+  const email = document.getElementById('registerEmail').value.trim();
   const password = document.getElementById('registerPassword').value;
   const confirmPassword = document.getElementById('confirmPassword').value;
-  const city = document.getElementById('registerCity').value;
+  const city = document.getElementById('registerCity').value.trim();
   const level = document.getElementById('registerLevel').value;
   const gender = document.getElementById('registerGender').value;
   const acceptTerms = document.getElementById('acceptTerms').checked;
 
-  // Validation
   if (!name || !email || !password || !confirmPassword || !city || !level || !gender) {
     showMessage('Por favor, preencha todos os campos.', 'error');
+    return;
+  }
+
+  if (password.length < 6) {
+    showMessage('A senha precisa ter pelo menos 6 caracteres.', 'error');
     return;
   }
 
@@ -389,374 +404,389 @@ function handleRegister(event) {
     return;
   }
 
-  // Simulate registration success
-  isAuthenticated = true;
-  currentUser = {
+  enterApp({
     ...appData.user,
-    name: name,
-    email: email,
-    city: city,
-    level: level,
-    gender: gender
-  };
+    name,
+    email,
+    city,
+    level,
+    gender,
+    bio: 'Novo no FitConnect 👋',
+    preferences: [],
+    stats: { activitiesJoined: 0, distanceCovered: 0, friendsMade: 0 },
+    history: []
+  }, `Conta criada! Bem-vindo, ${firstName(name)}!`);
+}
 
-  // Show main app and hide auth screens
-  document.getElementById('mainApp').classList.remove('hidden');
-  document.querySelectorAll('.auth-screen').forEach(screen => {
-    screen.style.display = 'none';
-  });
-
-  // Go to home screen
+function enterApp(user, message) {
+  state.user = user;
   showScreen('home');
+  showMessage(message, 'success');
+}
 
-  // Show success message
-  showMessage('Cadastro realizado com sucesso!', 'success');
+function forgotPassword(event) {
+  event.preventDefault();
+  showMessage('A recuperação de senha chega junto com o login real.', 'info');
 }
 
 function logout() {
-  // Reset authentication state
-  isAuthenticated = false;
-  currentUser = null;
+  state.user = null;
+  state.homeType = 'todas';
 
-  // Hide main app and show welcome screen
-  document.getElementById('mainApp').classList.add('hidden');
-  document.querySelectorAll('.auth-screen').forEach(screen => {
-    screen.style.display = 'block';
-  });
-
-  // Reset forms
   document.getElementById('loginForm').reset();
   document.getElementById('registerForm').reset();
+  clearAllFilters();
 
-  // Show welcome screen
   showScreen('welcome');
-
-  showMessage('Logout realizado com sucesso!', 'info');
+  showMessage('Você saiu da sua conta.', 'info');
 }
 
-// Activity Feed Functions
+// Home
+function renderHome() {
+  document.getElementById('homeGreeting').textContent = `Olá, ${firstName(state.user.name)} 👋`;
+  document.getElementById('homeDate').textContent = new Date().toLocaleDateString('pt-BR', {
+    weekday: 'long', day: 'numeric', month: 'long'
+  });
+
+  // Category quick filters
+  const categories = document.getElementById('homeCategories');
+  categories.innerHTML = '';
+  [{ name: 'todas', icon: '✨' }, ...appData.activityTypes].forEach(type => {
+    const chip = document.createElement('button');
+    chip.className = `chip${state.homeType === type.name ? ' active' : ''}`;
+    chip.textContent = `${type.icon} ${type.name}`;
+    chip.onclick = () => {
+      state.homeType = type.name;
+      renderHome();
+    };
+    categories.appendChild(chip);
+  });
+
+  loadActivityFeed();
+}
+
+function upcomingActivities() {
+  const today = toISODate(new Date());
+  return appData.activities
+    .filter(activity => activity.date >= today)
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+}
+
 function loadActivityFeed() {
   const feedContainer = document.getElementById('activityFeed');
   if (!feedContainer) return;
 
-  feedContainer.innerHTML = '';
+  const activities = upcomingActivities().filter(activity =>
+    state.homeType === 'todas' || activity.type === state.homeType
+  );
 
-  appData.activities.forEach(activity => {
-    const activityCard = createActivityCard(activity);
-    feedContainer.appendChild(activityCard);
+  document.getElementById('homeCount').textContent =
+    `${activities.length} ${activities.length === 1 ? 'atividade' : 'atividades'}`;
+  renderActivityList(feedContainer, activities, {
+    emoji: '🗓️',
+    title: 'Nada por aqui ainda',
+    text: 'Que tal criar a primeira atividade dessa categoria?'
   });
 }
 
+function renderActivityList(container, activities, empty) {
+  container.innerHTML = '';
+
+  if (activities.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="emoji">${empty.emoji}</div>
+        <h3>${empty.title}</h3>
+        <p>${empty.text}</p>
+      </div>
+    `;
+    return;
+  }
+
+  activities.forEach(activity => container.appendChild(createActivityCard(activity)));
+}
+
 function createActivityCard(activity) {
-  const card = document.createElement('div');
+  const card = document.createElement('button');
   card.className = 'activity-card';
   card.onclick = () => showActivityDetail(activity.id);
 
-  const genderIcon = getGenderIcon(activity.gender);
-  const ageIcon = getAgeIcon(activity.ageRange);
+  const type = getActivityType(activity.type);
+  const spots = activity.maxParticipants - activity.participants;
+  const fill = Math.round((activity.participants / activity.maxParticipants) * 100);
 
   card.innerHTML = `
-    <div class="activity-header">
-      <div>
-        <div class="activity-title">${activity.title}</div>
-        <div class="activity-meta">
-          <span>📅 ${formatDate(activity.date)}</span>
-          <span>🕐 ${activity.time}</span>
-          <span>📍 ${activity.location}</span>
-        </div>
+    <div class="card-top">
+      <div class="type-bubble" style="--type-color:${type.color}">${type.icon}</div>
+      <div class="card-main">
+        <div class="card-title">${escapeHtml(activity.title)}</div>
+        <div class="card-host">por ${escapeHtml(activity.host)}</div>
       </div>
-      <div class="activity-type">${activity.image}</div>
+      <span class="level-badge lvl-${levelSlug(activity.level)}">${escapeHtml(capitalize(activity.level))}</span>
     </div>
-    <div class="activity-footer">
-      <div class="participants">
-        <span>👥 ${activity.participants}/${activity.maxParticipants}</span>
+    <div class="card-meta">
+      <span>${icon('calendar')} ${formatDate(activity.date)} · ${escapeHtml(activity.time)}</span>
+      <span>${icon('pin')} <span class="truncate">${escapeHtml(activity.location)}</span></span>
+    </div>
+    <div class="card-bottom">
+      <div class="capacity">
+        <div class="capacity-bar${spots <= 0 ? ' is-full' : ''}"><span style="width:${fill}%"></span></div>
+        <span class="capacity-text">${activity.participants}/${activity.maxParticipants} · ${spots > 0 ? `${spots} ${spots === 1 ? 'vaga' : 'vagas'}` : 'Lotada'}</span>
       </div>
-      <div class="level-badge ${activity.level}">${activity.level}</div>
+      <div class="card-tags">
+        <span class="tag">${getGenderIcon(activity.gender)} ${getGenderLabel(activity.gender)}</span>
+        <span class="tag">${shortAgeLabel(activity.ageRange)}</span>
+      </div>
     </div>
-    <div class="gender-age-badges">
-      <div class="badge gender">${genderIcon} ${getGenderLabel(activity.gender)}</div>
-      <div class="badge age">${ageIcon} ${getAgeLabel(activity.ageRange)}</div>
-    </div>
+    ${activity.joined ? `<span class="joined-pill">${icon('check')} ${activity.isHost ? 'Você organiza' : 'Inscrito'}</span>` : ''}
   `;
 
   return card;
 }
 
 // Search Functions
-function initializeActivityFilters() {
-  const filtersContainer = document.getElementById('activityFilters');
-  if (!filtersContainer) return;
-
+function initializeSearch() {
+  // Activity type chips are generated from the data
+  const typeContainer = document.getElementById('activityFilters');
   appData.activityTypes.forEach(type => {
-    const chip = document.createElement('div');
-    chip.className = 'filter-chip';
+    const chip = document.createElement('button');
+    chip.className = 'chip';
     chip.dataset.filter = 'type';
     chip.dataset.value = type.name;
-    chip.innerHTML = `${type.icon} ${type.name}`;
-    chip.onclick = () => toggleFilter('type', type.name, chip);
-    filtersContainer.appendChild(chip);
+    chip.textContent = `${type.icon} ${type.name}`;
+    typeContainer.appendChild(chip);
   });
 
-  // Add event listeners to other filter chips
-  document.querySelectorAll('.filter-chip').forEach(chip => {
-    chip.addEventListener('click', function() {
-      const filter = this.dataset.filter;
-      const value = this.dataset.value;
-      if (filter && value) {
-        toggleFilter(filter, value, this);
-      }
-    });
+  // One delegated listener for every filter chip
+  document.getElementById('filtersPanel').addEventListener('click', event => {
+    const chip = event.target.closest('.chip[data-filter]');
+    if (chip) toggleFilter(chip.dataset.filter, chip.dataset.value, chip);
   });
 
-  // Search input
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput) {
-    searchInput.addEventListener('input', function() {
-      loadSearchResults(this.value);
-    });
-  }
+  document.getElementById('searchInput').addEventListener('input', event => {
+    state.search = event.target.value;
+    loadSearchResults();
+  });
+}
+
+function toggleFiltersPanel() {
+  const panel = document.getElementById('filtersPanel');
+  const toggle = document.getElementById('filterToggle');
+  panel.hidden = !panel.hidden;
+  toggle.setAttribute('aria-expanded', String(!panel.hidden));
 }
 
 function toggleFilter(filterType, value, element) {
-  const isActive = element.classList.contains('active');
+  const values = state.filters[filterType];
+  const isActive = values.includes(value);
 
-  if (isActive) {
-    element.classList.remove('active');
-    activeFilters[filterType] = activeFilters[filterType].filter(v => v !== value);
-  } else {
-    element.classList.add('active');
-    if (!activeFilters[filterType].includes(value)) {
-      activeFilters[filterType].push(value);
-    }
-  }
+  state.filters[filterType] = isActive ? values.filter(v => v !== value) : [...values, value];
+  element.classList.toggle('active', !isActive);
 
   loadSearchResults();
 }
 
 function clearAllFilters() {
-  // Reset active filters
-  activeFilters = {
-    type: [],
-    time: [],
-    level: [],
-    gender: [],
-    age: []
-  };
+  state.filters = emptyFilters();
+  state.search = '';
 
-  // Remove active class from all filter chips
-  document.querySelectorAll('.filter-chip').forEach(chip => {
-    chip.classList.remove('active');
-  });
+  document.querySelectorAll('#filtersPanel .chip').forEach(chip => chip.classList.remove('active'));
+  document.getElementById('searchInput').value = '';
 
-  // Clear search input
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput) {
-    searchInput.value = '';
-  }
-
-  // Reload search results
   loadSearchResults();
 }
 
-function loadSearchResults(searchTerm = '') {
+function matchesTimeOfDay(time, period) {
+  const hour = parseInt(time.split(':')[0], 10);
+  switch (period) {
+    case 'manhã': return hour >= 5 && hour < 12;
+    case 'tarde': return hour >= 12 && hour < 18;
+    case 'noite': return hour >= 18 || hour < 5;
+    default: return true;
+  }
+}
+
+function loadSearchResults() {
   const resultsContainer = document.getElementById('searchResults');
   if (!resultsContainer) return;
 
-  let filteredActivities = appData.activities;
+  const term = normalize(state.search.trim());
+  const { type, time, level, gender, age } = state.filters;
 
-  // Apply search term filter
-  if (searchTerm) {
-    filteredActivities = filteredActivities.filter(activity =>
-      activity.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      activity.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      activity.location.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }
+  const results = upcomingActivities().filter(activity => {
+    if (term && ![activity.title, activity.description, activity.location, activity.host]
+      .some(field => normalize(field).includes(term))) return false;
+    if (type.length && !type.includes(activity.type)) return false;
+    if (time.length && !time.some(period => matchesTimeOfDay(activity.time, period))) return false;
+    if (level.length && !level.includes(activity.level)) return false;
+    if (gender.length && !gender.includes(activity.gender)) return false;
+    if (age.length && !age.includes(activity.ageRange)) return false;
+    return true;
+  });
 
-  // Apply type filter
-  if (activeFilters.type.length > 0) {
-    filteredActivities = filteredActivities.filter(activity =>
-      activeFilters.type.includes(activity.type)
-    );
-  }
+  const activeCount = Object.values(state.filters).reduce((sum, list) => sum + list.length, 0);
+  const filterCount = document.getElementById('filterCount');
+  filterCount.hidden = activeCount === 0;
+  filterCount.textContent = activeCount;
 
-  // Apply time filter
-  if (activeFilters.time.length > 0) {
-    filteredActivities = filteredActivities.filter(activity => {
-      const hour = parseInt(activity.time.split(':')[0]);
-      return activeFilters.time.some(timeFilter => {
-        switch(timeFilter) {
-          case 'manhã': return hour >= 5 && hour < 12;
-          case 'tarde': return hour >= 12 && hour < 18;
-          case 'noite': return hour >= 18 || hour < 5;
-          default: return true;
-        }
-      });
-    });
-  }
+  document.getElementById('resultsCount').textContent =
+    `${results.length} ${results.length === 1 ? 'atividade encontrada' : 'atividades encontradas'}`;
 
-  // Apply level filter
-  if (activeFilters.level.length > 0) {
-    filteredActivities = filteredActivities.filter(activity =>
-      activeFilters.level.includes(activity.level)
-    );
-  }
-
-  // Apply gender filter
-  if (activeFilters.gender.length > 0) {
-    filteredActivities = filteredActivities.filter(activity =>
-      activeFilters.gender.includes(activity.gender)
-    );
-  }
-
-  // Apply age filter
-  if (activeFilters.age.length > 0) {
-    filteredActivities = filteredActivities.filter(activity =>
-      activeFilters.age.includes(activity.ageRange)
-    );
-  }
-
-  // Display results
-  resultsContainer.innerHTML = '';
-
-  if (filteredActivities.length === 0) {
-    resultsContainer.innerHTML = `
-      <div class="no-results">
-        <h3>Nenhuma atividade encontrada</h3>
-        <p>Tente ajustar os filtros ou termos de busca.</p>
-      </div>
-    `;
-  } else {
-    filteredActivities.forEach(activity => {
-      const activityCard = createActivityCard(activity);
-      resultsContainer.appendChild(activityCard);
-    });
-  }
+  renderActivityList(resultsContainer, results, {
+    emoji: '🔍',
+    title: 'Nenhuma atividade encontrada',
+    text: 'Tente ajustar os filtros ou termos de busca.'
+  });
 }
 
 // Activity Detail Functions
 function showActivityDetail(activityId) {
-  const activity = appData.activities.find(a => a.id === activityId);
-  if (!activity) return;
-
-  const detailContainer = document.getElementById('detailContent');
-  if (!detailContainer) return;
-
-  const genderIcon = getGenderIcon(activity.gender);
-  const ageIcon = getAgeIcon(activity.ageRange);
-
-  detailContainer.innerHTML = `
-    <div class="detail-image">
-      ${activity.image}
-    </div>
-    <div class="detail-info">
-      <h1 class="detail-title">${activity.title}</h1>
-      <div class="detail-meta">
-        <div class="meta-item">
-          <span>📅</span>
-          <span>${formatDate(activity.date)} às ${activity.time}</span>
-        </div>
-        <div class="meta-item">
-          <span>📍</span>
-          <span>${activity.location}</span>
-        </div>
-        <div class="meta-item">
-          <span>👨‍🏫</span>
-          <span>Organizador: ${activity.host}</span>
-        </div>
-        <div class="meta-item">
-          <span>📊</span>
-          <span>Nível: ${activity.level}</span>
-        </div>
-        <div class="meta-item">
-          <span>${genderIcon}</span>
-          <span>${getGenderLabel(activity.gender)}</span>
-        </div>
-        <div class="meta-item">
-          <span>${ageIcon}</span>
-          <span>${getAgeLabel(activity.ageRange)}</span>
-        </div>
-      </div>
-      <p class="detail-description">${activity.description}</p>
-      <div class="participant-info">
-        <span><strong>${activity.participants}/${activity.maxParticipants} participantes</strong></span>
-        <span>${activity.maxParticipants - activity.participants} vagas restantes</span>
-      </div>
-      <button class="join-btn" onclick="joinActivity(${activity.id})">
-        Participar da Atividade
-      </button>
-      <button class="chat-btn" onclick="openActivityChat(${activity.id})">
-        💬 Chat do Grupo
-      </button>
-    </div>
-  `;
-
+  if (!renderActivityDetail(activityId)) return;
   showScreen('activityDetail');
 }
 
-function joinActivity(activityId) {
-  const activity = appData.activities.find(a => a.id === activityId);
-  if (!activity) return;
+function renderActivityDetail(activityId) {
+  const activity = findActivity(activityId);
+  const detailContainer = document.getElementById('detailContent');
+  if (!activity || !detailContainer) return false;
 
-  if (activity.participants < activity.maxParticipants) {
-    activity.participants++;
-    showMessage(`Você se inscreveu em "${activity.title}"!`, 'success');
-    showActivityDetail(activityId); // Refresh the detail view
+  const type = getActivityType(activity.type);
+  const spots = activity.maxParticipants - activity.participants;
+  const fill = Math.round((activity.participants / activity.maxParticipants) * 100);
+
+  let primaryAction;
+  if (activity.isHost) {
+    primaryAction = `<button class="btn btn--secondary btn--lg" disabled>${icon('check')} Você organiza</button>`;
+  } else if (activity.joined) {
+    primaryAction = `<button class="btn btn--outline btn--lg" onclick="toggleJoin(${activity.id})">Cancelar inscrição</button>`;
+  } else if (spots <= 0) {
+    primaryAction = `<button class="btn btn--primary btn--lg" disabled>Atividade lotada</button>`;
   } else {
-    showMessage('Esta atividade está lotada.', 'error');
+    primaryAction = `<button class="btn btn--primary btn--lg" onclick="toggleJoin(${activity.id})">Participar</button>`;
   }
+
+  detailContainer.innerHTML = `
+    <div class="detail-hero" style="--type-color:${type.color}">${type.icon}</div>
+    <div class="detail-body">
+      <span class="level-badge lvl-${levelSlug(activity.level)}">${escapeHtml(capitalize(activity.level))}</span>
+      <h1 class="detail-title">${escapeHtml(activity.title)}</h1>
+
+      <div class="host-row">
+        <span class="avatar avatar--md">${escapeHtml(initials(activity.host))}</span>
+        <div>
+          <small>Organizado por</small>
+          <strong>${escapeHtml(activity.host)}</strong>
+        </div>
+      </div>
+
+      <div class="info-list">
+        <div class="info-item">
+          <span class="info-icon">${icon('calendar')}</span>
+          <div><small>Quando</small>${formatDate(activity.date, true)} às ${escapeHtml(activity.time)}</div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">${icon('pin')}</span>
+          <div><small>Onde</small>${escapeHtml(activity.location)}</div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">${getGenderIcon(activity.gender)}</span>
+          <div><small>Público</small>${getGenderLabel(activity.gender)} · ${getAgeLabel(activity.ageRange)}</div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3>Sobre</h3>
+        <p class="detail-description">${escapeHtml(activity.description)}</p>
+      </div>
+
+      <div class="detail-capacity">
+        <div class="detail-capacity-head">
+          <strong>${activity.participants} de ${activity.maxParticipants} participantes</strong>
+          <span class="muted">${spots > 0 ? `${spots} ${spots === 1 ? 'vaga' : 'vagas'}` : 'Lotada'}</span>
+        </div>
+        <div class="capacity-bar${spots <= 0 ? ' is-full' : ''}"><span style="width:${fill}%"></span></div>
+      </div>
+    </div>
+    <div class="detail-cta">
+      <button class="btn btn--outline btn--lg btn--icon" onclick="openActivityChat(${activity.id})" aria-label="Chat do grupo">${icon('chat')}</button>
+      ${primaryAction}
+    </div>
+  `;
+
+  return true;
+}
+
+function toggleJoin(activityId) {
+  const activity = findActivity(activityId);
+  if (!activity || activity.isHost) return;
+
+  if (activity.joined) {
+    activity.joined = false;
+    activity.participants--;
+    showMessage('Inscrição cancelada.', 'info');
+  } else if (activity.participants >= activity.maxParticipants) {
+    showMessage('Esta atividade está lotada.', 'error');
+    return;
+  } else {
+    activity.joined = true;
+    activity.participants++;
+    showMessage(`Você está dentro! Até ${formatDate(activity.date).toLowerCase()} 💪`, 'success');
+  }
+
+  renderActivityDetail(activityId);
 }
 
 function openActivityChat(activityId) {
-  showMessage('Chat em desenvolvimento!', 'info');
-  showScreen('chat');
+  showMessage('O chat do grupo está em desenvolvimento!', 'info');
 }
 
 // Profile Functions
 function loadUserProfile() {
-  if (!currentUser) return;
+  const user = state.user;
+  if (!user) return;
 
-  // Update profile name
-  const profileName = document.getElementById('profileName');
-  if (profileName) {
-    profileName.textContent = currentUser.name;
-  }
+  document.getElementById('profileAvatar').textContent = initials(user.name);
+  document.getElementById('profileName').textContent = user.name;
+  document.getElementById('profileMeta').textContent = `📍 ${user.city} · ${capitalize(user.level)}`;
+  document.getElementById('profileBio').textContent = user.bio;
 
-  // Update profile bio
-  const profileBio = document.getElementById('profileBio');
-  if (profileBio) {
-    profileBio.textContent = currentUser.bio;
-  }
+  const joinedNow = appData.activities.filter(a => a.joined).length;
+  document.getElementById('profileStats').innerHTML = `
+    <div class="stat-item"><span class="stat-number">${user.stats.activitiesJoined + joinedNow}</span><span class="stat-label">Atividades</span></div>
+    <div class="stat-item"><span class="stat-number">${user.stats.distanceCovered}</span><span class="stat-label">Km percorridos</span></div>
+    <div class="stat-item"><span class="stat-number">${user.stats.friendsMade}</span><span class="stat-label">Amigos</span></div>
+  `;
 
-  // Update preference tags
   const preferenceTags = document.getElementById('preferenceTags');
-  if (preferenceTags) {
-    preferenceTags.innerHTML = '';
-    currentUser.preferences.forEach(preference => {
-      const tag = document.createElement('div');
-      tag.className = 'preference-tag';
-      tag.textContent = preference;
-      preferenceTags.appendChild(tag);
-    });
+  preferenceTags.innerHTML = '';
+  if (user.preferences.length === 0) {
+    preferenceTags.innerHTML = '<p class="muted">Nenhuma preferência ainda.</p>';
   }
+  user.preferences.forEach(preference => {
+    const tag = document.createElement('span');
+    tag.className = 'preference-tag';
+    tag.textContent = `${getActivityType(preference).icon} ${preference}`;
+    preferenceTags.appendChild(tag);
+  });
 
-  // Update activity history
   const activityHistory = document.getElementById('activityHistory');
-  if (activityHistory) {
-    activityHistory.innerHTML = '';
-    currentUser.history.forEach(item => {
-      const historyItem = document.createElement('div');
-      historyItem.className = 'history-item';
-      historyItem.innerHTML = `
-        <div class="history-info">
-          <h4>${item.activity}</h4>
-          <p>${formatDate(item.date)}</p>
-        </div>
-        <div class="history-type">${getActivityIcon(item.type)}</div>
-      `;
-      activityHistory.appendChild(historyItem);
-    });
+  activityHistory.innerHTML = '';
+  if (user.history.length === 0) {
+    activityHistory.innerHTML = '<p class="muted">Suas atividades concluídas aparecerão aqui.</p>';
   }
+  user.history.forEach(item => {
+    const type = getActivityType(item.type);
+    const historyItem = document.createElement('div');
+    historyItem.className = 'history-item';
+    historyItem.innerHTML = `
+      <div class="type-bubble" style="--type-color:${type.color}">${type.icon}</div>
+      <div class="history-info">
+        <h4>${escapeHtml(item.activity)}</h4>
+        <p>${formatDate(item.date, true)}</p>
+      </div>
+    `;
+    activityHistory.appendChild(historyItem);
+  });
 }
 
 // Chat Functions
@@ -767,17 +797,23 @@ function loadChatList() {
   chatList.innerHTML = '';
 
   appData.chats.forEach(chat => {
-    const chatItem = document.createElement('div');
-    chatItem.className = 'chat-item';
+    const type = getActivityType(chat.type);
+    const chatItem = document.createElement('button');
+    chatItem.className = 'list-item';
     chatItem.onclick = () => openChat(chat.id);
 
     chatItem.innerHTML = `
-      <div class="chat-header">
-        <div class="chat-name">${chat.groupName}</div>
-        <div class="chat-time">${chat.timestamp}</div>
+      <div class="type-bubble" style="--type-color:${type.color}">${type.icon}</div>
+      <div class="list-main">
+        <div class="list-head">
+          <span class="list-title">${escapeHtml(chat.groupName)}</span>
+          <span class="list-time">${chat.timestamp}</span>
+        </div>
+        <div class="list-preview">
+          <span>${escapeHtml(chat.lastMessage)}</span>
+          ${chat.unread > 0 ? `<span class="unread-badge">${chat.unread}</span>` : ''}
+        </div>
       </div>
-      <div class="chat-preview">${chat.lastMessage}</div>
-      ${chat.unread > 0 ? `<div class="unread-badge">${chat.unread}</div>` : ''}
     `;
 
     chatList.appendChild(chatItem);
@@ -785,10 +821,12 @@ function loadChatList() {
 }
 
 function openChat(chatId) {
-  showMessage('Chat individual em desenvolvimento!', 'info');
+  showMessage('Conversas individuais em desenvolvimento!', 'info');
 }
 
 // Notifications Functions
+const notificationIcons = { invite: 'users', reminder: 'clock', update: 'alert' };
+
 function loadNotifications() {
   const notificationsList = document.getElementById('notificationsList');
   if (!notificationsList) return;
@@ -796,129 +834,154 @@ function loadNotifications() {
   notificationsList.innerHTML = '';
 
   appData.notifications.forEach(notification => {
-    const notificationItem = document.createElement('div');
-    notificationItem.className = `notification-item ${notification.read ? 'read' : 'unread'}`;
-    notificationItem.onclick = () => markAsRead(notification.id);
+    const item = document.createElement('button');
+    item.className = `list-item notification-item ${notification.read ? 'read' : 'unread'}`;
+    item.onclick = () => markAsRead(notification.id);
 
-    notificationItem.innerHTML = `
-      <div class="notification-header">
-        <div class="notification-title">${notification.title}</div>
-        <div class="notification-time">${notification.timestamp}</div>
+    item.innerHTML = `
+      <span class="notif-icon">${icon(notificationIcons[notification.type] || 'bell')}</span>
+      <div class="list-main">
+        <div class="list-head">
+          <span class="list-title">${escapeHtml(notification.title)}</span>
+          <span class="list-time">${notification.timestamp}</span>
+        </div>
+        <div class="list-preview">
+          <span>${escapeHtml(notification.message)}</span>
+          ${notification.read ? '' : '<span class="unread-dot"></span>'}
+        </div>
       </div>
-      <div class="notification-message">${notification.message}</div>
     `;
 
-    notificationsList.appendChild(notificationItem);
+    notificationsList.appendChild(item);
   });
+
+  updateBadges();
 }
 
 function markAsRead(notificationId) {
   const notification = appData.notifications.find(n => n.id === notificationId);
-  if (notification) {
+  if (notification && !notification.read) {
     notification.read = true;
     loadNotifications();
   }
 }
 
-// Create Activity Functions
-function showCreateActivity() {
-  const modal = document.getElementById('createActivityModal');
-  if (modal) {
-    modal.classList.add('active');
-    modal.style.display = 'flex';
-  }
+function markAllAsRead() {
+  appData.notifications.forEach(n => { n.read = true; });
+  loadNotifications();
+}
+
+// Create Activity (bottom sheet)
+function openCreateActivity() {
+  const dateInput = document.getElementById('activityDate');
+  dateInput.min = toISODate(new Date());
+  if (!dateInput.value) dateInput.value = daysFromNow(1);
+
+  document.getElementById('sheetBackdrop').classList.add('open');
+  document.getElementById('createActivitySheet').classList.add('open');
 }
 
 function closeCreateActivity() {
-  const modal = document.getElementById('createActivityModal');
-  if (modal) {
-    modal.classList.remove('active');
-    modal.style.display = 'none';
-  }
+  const sheet = document.getElementById('createActivitySheet');
+  if (!sheet.classList.contains('open')) return;
 
-  // Reset form
-  const form = document.getElementById('createActivityForm');
-  if (form) {
-    form.reset();
-  }
+  sheet.classList.remove('open');
+  document.getElementById('sheetBackdrop').classList.remove('open');
+  document.getElementById('createActivityForm').reset();
 }
 
 function handleCreateActivity(event) {
   event.preventDefault();
 
-  const title = document.getElementById('activityTitle').value;
-  const type = document.getElementById('activityType').value;
   const date = document.getElementById('activityDate').value;
-  const time = document.getElementById('activityTime').value;
-  const location = document.getElementById('activityLocation').value;
-  const level = document.getElementById('activityLevel').value;
-  const gender = document.getElementById('activityGender').value;
-  const ageRange = document.getElementById('activityAge').value;
-  const maxParticipants = parseInt(document.getElementById('maxParticipants').value);
-  const description = document.getElementById('activityDescription').value;
+  if (date < toISODate(new Date())) {
+    showMessage('Escolha uma data a partir de hoje.', 'error');
+    return;
+  }
 
-  // Create new activity
+  const type = document.getElementById('activityType').value;
   const newActivity = {
-    id: appData.activities.length + 1,
-    title,
+    id: Math.max(0, ...appData.activities.map(a => a.id)) + 1,
+    title: document.getElementById('activityTitle').value.trim(),
     type,
     date,
-    time,
-    location,
+    time: document.getElementById('activityTime').value,
+    location: document.getElementById('activityLocation').value.trim(),
     participants: 1, // Creator is first participant
-    maxParticipants,
-    level,
-    gender,
-    ageRange,
-    description,
-    host: currentUser ? currentUser.name : 'Usuário',
-    image: getActivityIcon(type)
+    maxParticipants: parseInt(document.getElementById('maxParticipants').value, 10),
+    level: document.getElementById('activityLevel').value,
+    gender: document.getElementById('activityGender').value,
+    ageRange: document.getElementById('activityAge').value,
+    description: document.getElementById('activityDescription').value.trim(),
+    host: state.user ? state.user.name : 'Usuário',
+    joined: true,
+    isHost: true
   };
 
-  // Add to activities list
   appData.activities.unshift(newActivity);
 
-  // Close modal
   closeCreateActivity();
-
-  // Refresh activity feed
-  loadActivityFeed();
-
-  // Show success message
-  showMessage('Atividade criada com sucesso!', 'success');
-
-  // Go to home screen
-  showScreen('home');
+  showMessage('Atividade publicada! 🎉', 'success');
+  showActivityDetail(newActivity.id);
 }
 
 // Utility Functions
-function updateBottomNavigation(activeScreen) {
-  const navItems = document.querySelectorAll('.nav-item');
-  navItems.forEach(item => {
-    item.classList.remove('active');
-    if (item.dataset.screen === activeScreen) {
-      item.classList.add('active');
-    }
-  });
+function findActivity(id) {
+  return appData.activities.find(a => a.id === id);
 }
 
-function goBack() {
-  // Simple back navigation - in a real app, this would maintain a proper history stack
-  showScreen('home');
+function icon(name) {
+  return `<svg class="i" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 }
 
-function formatDate(dateString) {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-function getActivityIcon(type) {
-  const activityType = appData.activityTypes.find(t => t.name === type);
-  return activityType ? activityType.icon : '🏃';
+function normalize(text) {
+  return text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+function levelSlug(level) {
+  return normalize(level);
+}
+
+function capitalize(text) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function firstName(name) {
+  return name.split(' ')[0];
+}
+
+function initials(name) {
+  const parts = name.trim().split(/\s+/);
+  const letters = parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : parts[0].slice(0, 2);
+  return letters.toUpperCase();
+}
+
+function formatDate(dateString, long = false) {
+  const date = parseISODate(dateString);
+  const today = parseISODate(toISODate(new Date()));
+  const diff = Math.round((date - today) / 86400000);
+
+  if (diff === 0) return 'Hoje';
+  if (diff === 1) return 'Amanhã';
+  if (diff === -1) return 'Ontem';
+
+  const options = long
+    ? { weekday: 'long', day: 'numeric', month: 'long' }
+    : { weekday: 'short', day: '2-digit', month: 'short' };
+  return capitalize(date.toLocaleDateString('pt-BR', options).replace(/\./g, ''));
+}
+
+function getActivityType(name) {
+  return appData.activityTypes.find(t => t.name === name) || { name, icon: '🏃', color: '#10B981' };
 }
 
 function getGenderIcon(gender) {
@@ -931,56 +994,38 @@ function getGenderLabel(gender) {
   return genderOption ? genderOption.label : 'Todos';
 }
 
-function getAgeIcon(ageRange) {
-  const ageOption = appData.ageRanges.find(a => a.value === ageRange);
-  return ageOption ? ageOption.icon : '📅';
-}
-
 function getAgeLabel(ageRange) {
   const ageOption = appData.ageRanges.find(a => a.value === ageRange);
   return ageOption ? ageOption.label : 'Todas as idades';
 }
 
-function showMessage(message, type = 'info') {
-  // Create message element
-  const messageEl = document.createElement('div');
-  messageEl.className = `message ${type}`;
-  messageEl.textContent = message;
-
-  // Add to body
-  document.body.appendChild(messageEl);
-
-  // Position message
-  messageEl.style.position = 'fixed';
-  messageEl.style.top = '20px';
-  messageEl.style.left = '50%';
-  messageEl.style.transform = 'translateX(-50%)';
-  messageEl.style.zIndex = '9999';
-  messageEl.style.minWidth = '300px';
-  messageEl.style.textAlign = 'center';
-
-  // Remove after 3 seconds
-  setTimeout(() => {
-    if (messageEl.parentNode) {
-      messageEl.parentNode.removeChild(messageEl);
-    }
-  }, 3000);
+function shortAgeLabel(ageRange) {
+  return ageRange === 'todas' ? 'Todas idades' : `${ageRange} anos`;
 }
 
-// Close modal when clicking outside
-document.addEventListener('click', function(event) {
-  const modals = document.querySelectorAll('.modal');
-  modals.forEach(modal => {
-    if (event.target === modal) {
-      modal.classList.remove('active');
-      modal.style.display = 'none';
-    }
-  });
-});
+function showMessage(message, type = 'info') {
+  const icons = { success: 'check', error: 'alert', info: 'info' };
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `${icon(icons[type] || 'info')}<span></span>`;
+  toast.querySelector('span').textContent = message;
 
-// Prevent form submission on Enter key in search
-document.addEventListener('keydown', function(event) {
-  if (event.key === 'Enter' && event.target.id === 'searchInput') {
-    event.preventDefault();
-  }
-});
+  // One toast at a time, like native snackbars
+  const container = document.getElementById('toasts');
+  container.replaceChildren(toast);
+
+  setTimeout(() => {
+    toast.classList.add('leaving');
+    toast.addEventListener('animationend', () => toast.remove(), { once: true });
+  }, 2600);
+}
+
+// Simulated phone status bar clock (desktop preview)
+function startStatusClock() {
+  const clock = document.getElementById('statusClock');
+  const tick = () => {
+    clock.textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
+  tick();
+  setInterval(tick, 30000);
+}
