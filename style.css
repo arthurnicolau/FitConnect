@@ -927,6 +927,21 @@ textarea.form-control { resize: none; }
   margin-bottom: 0.5rem;
 }
 
+.filters-note {
+  font-size: 0.8rem;
+  color: var(--text-2);
+  margin-bottom: 0.75rem;
+}
+
+.form-section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+  margin: 0.5rem 0 0.5rem;
+}
+
 .results-count {
   font-size: 0.85rem;
   font-weight: 600;
@@ -1020,6 +1035,81 @@ textarea.form-control { resize: none; }
   color: var(--text-2);
 }
 
+.detail-badges {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.tag--private {
+  background: var(--text);
+  color: var(--surface);
+}
+
+.requirements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.requirements .tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  padding: 0.35rem 0.7rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.requirements .i { width: 14px; height: 14px; }
+
+.notice {
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-sm);
+  background: var(--lvl-2-bg);
+  color: var(--lvl-2-fg);
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.notice--danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.invite-link {
+  display: block;
+  margin: 0.75rem 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-size: 0.78rem;
+  word-break: break-all;
+  user-select: all;
+}
+
+.invite-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.invite-actions .btn {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.invite-box p.muted { font-size: 0.85rem; }
+
+.host-note {
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
 .detail-section h3 {
   font-size: 1rem;
   font-weight: 700;
@@ -1058,7 +1148,10 @@ textarea.form-control { resize: none; }
 
 .detail-cta .btn--primary,
 .detail-cta .btn--secondary,
+.detail-cta .btn--danger-ghost,
 .detail-cta .btn--outline:not(.btn--icon) { flex: 1; }
+
+.detail-cta .btn--danger-ghost { margin-top: 0; }
 
 .btn--icon {
   padding: 0;

@@ -86,7 +86,7 @@
                     </button>
                     <div class="auth-intro">
                         <h2>Bem-vindo de volta</h2>
-                        <p>Entre para ver as atividades perto de você.</p>
+                        <p>Entre para ver os eventos perto de você.</p>
                     </div>
                 </div>
                 <div class="auth-sheet">
@@ -147,15 +147,19 @@
                             <label for="registerCity">Cidade</label>
                             <input type="text" id="registerCity" class="form-control" placeholder="Sua cidade" autocomplete="address-level2" required>
                         </div>
+                        <div class="form-group">
+                            <label for="registerLevel">Nível de experiência</label>
+                            <select id="registerLevel" class="form-control" required>
+                                <option value="">Selecione</option>
+                                <option value="iniciante">Iniciante</option>
+                                <option value="intermediário">Intermediário</option>
+                                <option value="avançado">Avançado</option>
+                            </select>
+                        </div>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label for="registerLevel">Nível</label>
-                                <select id="registerLevel" class="form-control" required>
-                                    <option value="">Selecione</option>
-                                    <option value="iniciante">Iniciante</option>
-                                    <option value="intermediário">Intermediário</option>
-                                    <option value="avançado">Avançado</option>
-                                </select>
+                                <label for="registerBirthDate">Nascimento</label>
+                                <input type="date" id="registerBirthDate" class="form-control" autocomplete="bday" required>
                             </div>
                             <div class="form-group">
                                 <label for="registerGender">Gênero</label>
@@ -207,7 +211,7 @@
                         </div>
                         <div class="chip-scroller" id="homeCategories"></div>
                         <div class="section-title">
-                            <h3>Próximas atividades</h3>
+                            <h3>Próximos eventos</h3>
                             <span class="muted" id="homeCount"></span>
                         </div>
                         <div class="activity-feed" id="activityFeed"></div>
@@ -218,7 +222,7 @@
                         <div class="search-row">
                             <label class="search-field">
                                 <svg class="i"><use href="#i-search"/></svg>
-                                <input type="search" id="searchInput" placeholder="Atividade, local, organizador..." enterkeyhint="search">
+                                <input type="search" id="searchInput" placeholder="Evento, local, organizador..." enterkeyhint="search">
                             </label>
                             <button class="icon-btn icon-btn--boxed" id="filterToggle" onclick="toggleFiltersPanel()" aria-expanded="false" aria-controls="filtersPanel" aria-label="Filtros">
                                 <svg class="i"><use href="#i-sliders"/></svg>
@@ -228,7 +232,7 @@
 
                         <div class="filters" id="filtersPanel" hidden>
                             <div class="filter-section">
-                                <h4>Tipo de atividade</h4>
+                                <h4>Modalidade</h4>
                                 <div class="chip-row" id="activityFilters"></div>
                             </div>
                             <div class="filter-section">
@@ -247,26 +251,7 @@
                                     <button class="chip" data-filter="level" data-value="avançado">Avançado</button>
                                 </div>
                             </div>
-                            <div class="filter-section">
-                                <h4>Gênero</h4>
-                                <div class="chip-row">
-                                    <button class="chip" data-filter="gender" data-value="todos">⚥ Todos</button>
-                                    <button class="chip" data-filter="gender" data-value="masculino">♂️ Masculino</button>
-                                    <button class="chip" data-filter="gender" data-value="feminino">♀️ Feminino</button>
-                                    <button class="chip" data-filter="gender" data-value="misto">👥 Misto</button>
-                                </div>
-                            </div>
-                            <div class="filter-section">
-                                <h4>Idade</h4>
-                                <div class="chip-row">
-                                    <button class="chip" data-filter="age" data-value="todas">Todas</button>
-                                    <button class="chip" data-filter="age" data-value="18-25">18-25</button>
-                                    <button class="chip" data-filter="age" data-value="26-35">26-35</button>
-                                    <button class="chip" data-filter="age" data-value="36-45">36-45</button>
-                                    <button class="chip" data-filter="age" data-value="46-55">46-55</button>
-                                    <button class="chip" data-filter="age" data-value="55+">55+</button>
-                                </div>
-                            </div>
+                            <p class="filters-note">Você só vê eventos cujos requisitos de nível, idade e gênero você cumpre.</p>
                             <button class="btn btn--outline btn--block" onclick="clearAllFilters()">Limpar filtros</button>
                         </div>
 
@@ -293,7 +278,7 @@
                             <div class="preference-tags" id="preferenceTags"></div>
                         </div>
                         <div class="panel">
-                            <h3>Histórico de atividades</h3>
+                            <h3>Eventos realizados</h3>
                             <div class="activity-history" id="activityHistory"></div>
                         </div>
                         <button class="btn btn--danger-ghost btn--block" onclick="logout()">
@@ -325,13 +310,13 @@
                         <svg class="i"><use href="#i-search"/></svg>
                         <span>Buscar</span>
                     </button>
-                    <button class="tab tab--create" onclick="openCreateActivity()" aria-label="Criar atividade">
+                    <button class="tab tab--create" onclick="openCreateActivity()" aria-label="Criar evento">
                         <span class="fab"><svg class="i"><use href="#i-plus"/></svg></span>
                         <span>Criar</span>
                     </button>
                     <button class="tab" data-tab="chat" onclick="showScreen('chat')">
                         <svg class="i"><use href="#i-chat"/></svg>
-                        <span>Chat</span>
+                        <span>Conversas</span>
                         <span class="tab-badge" id="chatBadge" hidden></span>
                     </button>
                     <button class="tab" data-tab="profile" onclick="showScreen('profile')">
@@ -346,7 +331,7 @@
             <div class="sheet" id="createActivitySheet" role="dialog" aria-modal="true" aria-labelledby="createActivityTitle">
                 <div class="sheet-handle"></div>
                 <div class="sheet-header">
-                    <h3 id="createActivityTitle">Nova atividade</h3>
+                    <h3 id="createActivityTitle">Novo evento</h3>
                     <button class="icon-btn" onclick="closeCreateActivity()" aria-label="Fechar">
                         <svg class="i"><use href="#i-x"/></svg>
                     </button>
@@ -357,9 +342,9 @@
                         <input type="text" id="activityTitle" class="form-control" placeholder="Ex: Corrida no Parque" maxlength="60" required>
                     </div>
                     <div class="form-group">
-                        <label for="activityType">Tipo de atividade</label>
+                        <label for="activityType">Modalidade</label>
                         <select id="activityType" class="form-control" required>
-                            <option value="">Selecione o tipo</option>
+                            <option value="">Selecione a modalidade</option>
                             <option value="corrida">🏃 Corrida</option>
                             <option value="caminhada">🚶 Caminhada</option>
                             <option value="ciclismo">🚴 Ciclismo</option>
@@ -383,9 +368,10 @@
                         <label for="activityLocation">Local</label>
                         <input type="text" id="activityLocation" class="form-control" placeholder="Ex: Parque Ibirapuera, São Paulo" required>
                     </div>
+                    <p class="form-section-title">Requisitos</p>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="activityLevel">Nível</label>
+                            <label for="activityLevel">Nível mínimo</label>
                             <select id="activityLevel" class="form-control" required>
                                 <option value="">Selecione</option>
                                 <option value="iniciante">Iniciante</option>
@@ -394,26 +380,19 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="maxParticipants">Vagas</label>
-                            <input type="number" id="maxParticipants" class="form-control" min="2" max="50" placeholder="2 a 50" required>
+                            <label for="activityGender">Gênero</label>
+                            <select id="activityGender" class="form-control" required>
+                                <option value="todos">Aberto a todos</option>
+                                <option value="masculino">Só masculino</option>
+                                <option value="feminino">Só feminino</option>
+                            </select>
                         </div>
                     </div>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="activityGender">Gênero</label>
-                            <select id="activityGender" class="form-control" required>
-                                <option value="">Selecione</option>
-                                <option value="todos">⚥ Todos</option>
-                                <option value="masculino">♂️ Masculino</option>
-                                <option value="feminino">♀️ Feminino</option>
-                                <option value="misto">👥 Misto</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
                             <label for="activityAge">Faixa etária</label>
                             <select id="activityAge" class="form-control" required>
-                                <option value="">Selecione</option>
-                                <option value="todas">Todas</option>
+                                <option value="todas">Todas as idades</option>
                                 <option value="18-25">18-25 anos</option>
                                 <option value="26-35">26-35 anos</option>
                                 <option value="36-45">36-45 anos</option>
@@ -421,14 +400,29 @@
                                 <option value="55+">55+ anos</option>
                             </select>
                         </div>
+                        <div class="form-group">
+                            <label for="maxParticipants">Vagas</label>
+                            <input type="number" id="maxParticipants" class="form-control" min="2" max="50" placeholder="2 a 50" required>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="activityDescription">Descrição</label>
                         <textarea id="activityDescription" class="form-control" rows="3" placeholder="Ritmo, ponto de encontro, o que levar..." maxlength="280" required></textarea>
                     </div>
+                    <div class="form-group">
+                        <label for="activityVisibility">Visibilidade</label>
+                        <select id="activityVisibility" class="form-control">
+                            <option value="publico">Público: aparece na busca</option>
+                            <option value="privado">Privado: só por convite</option>
+                        </select>
+                    </div>
+                    <label class="checkbox-group form-group" for="hostParticipates">
+                        <input type="checkbox" id="hostParticipates" checked>
+                        <span>Vou participar (ocupo uma vaga)</span>
+                    </label>
                     <div class="sheet-actions">
                         <button type="button" class="btn btn--outline" onclick="closeCreateActivity()">Cancelar</button>
-                        <button type="submit" class="btn btn--primary">Publicar atividade</button>
+                        <button type="submit" class="btn btn--primary">Publicar evento</button>
                     </div>
                 </form>
             </div>

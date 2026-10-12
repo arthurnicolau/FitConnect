@@ -14,6 +14,11 @@ Para testar como app instalável (PWA), sirva a pasta por HTTP, por exemplo:
 npx serve .
 ```
 
+## Documentação
+
+- [GLOSSARY.md](GLOSSARY.md): a linguagem do app (Evento, Organizador, Requisitos, Conexão...)
+- [docs/SPEC.md](docs/SPEC.md): as regras de produto
+
 ## Roadmap
 
 1. ✅ Visual de aplicativo (navegação por abas, bottom sheet, modo escuro, moldura de celular)

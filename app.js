@@ -12,7 +12,7 @@ const state = {
 };
 
 function emptyFilters() {
-  return { type: [], time: [], level: [], gender: [], age: [] };
+  return { type: [], time: [], level: [] };
 }
 
 // Screen config: auth screens live outside the main app; tab screens reset
@@ -22,11 +22,11 @@ const screens = {
   login: { auth: true },
   register: { auth: true },
   home: { tab: 'home' },
-  search: { tab: 'search', title: 'Buscar atividades' },
+  search: { tab: 'search', title: 'Buscar eventos' },
   chat: { tab: 'chat', title: 'Conversas' },
   profile: { tab: 'profile', title: 'Meu perfil' },
   notifications: { back: true, title: 'Notificações' },
-  activityDetail: { back: true, title: 'Atividade' }
+  activityDetail: { back: true, title: 'Evento' }
 };
 
 // Date helpers (local time, avoids the UTC off-by-one of new Date('YYYY-MM-DD'))
@@ -48,7 +48,8 @@ function daysFromNow(days) {
   return toISODate(date);
 }
 
-// App Data (sample dates are relative to today so the feed never goes stale)
+// App Data (sample dates are relative to today so the feed never goes stale).
+// Domain language follows GLOSSARY.md: the UI says "Evento" for what the code calls an activity.
 const appData = {
   activities: [
     {
@@ -61,10 +62,11 @@ const appData = {
       participants: 12,
       maxParticipants: 20,
       level: "intermediário",
-      gender: "misto",
+      gender: "todos",
       ageRange: "26-35",
       description: "Corrida de 5km no Parque Ibirapuera. Ritmo moderado, ideal para quem já tem experiência.",
-      host: "Ana Silva"
+      host: "Ana Silva",
+      joined: true
     },
     {
       id: 2,
@@ -94,7 +96,8 @@ const appData = {
       gender: "todos",
       ageRange: "todas",
       description: "Pedalada tranquila pela ciclovia da Lagoa. Ideal para iniciantes e famílias.",
-      host: "Maria Costa"
+      host: "Maria Costa",
+      joined: true
     },
     {
       id: 4,
@@ -107,7 +110,7 @@ const appData = {
       maxParticipants: 22,
       level: "intermediário",
       gender: "masculino",
-      ageRange: "18-25",
+      ageRange: "26-35",
       description: "Partida amistosa de futebol society. Venha se divertir e fazer novos amigos!",
       host: "João Santos"
     },
@@ -121,7 +124,7 @@ const appData = {
       participants: 6,
       maxParticipants: 12,
       level: "iniciante",
-      gender: "misto",
+      gender: "todos",
       ageRange: "46-55",
       description: "Caminhada leve pela trilha da Tijuca. Vamos apreciar a natureza juntos!",
       host: "Fernanda Lima"
@@ -151,7 +154,7 @@ const appData = {
       participants: 18,
       maxParticipants: 18,
       level: "avançado",
-      gender: "misto",
+      gender: "todos",
       ageRange: "26-35",
       description: "Treino intensivo de crossfit para atletas experientes.",
       host: "Ricardo Lima"
@@ -166,8 +169,8 @@ const appData = {
       participants: 8,
       maxParticipants: 12,
       level: "intermediário",
-      gender: "misto",
-      ageRange: "18-25",
+      gender: "todos",
+      ageRange: "todas",
       description: "Partida de vôlei de praia com vista para o mar!",
       host: "Camila Rodrigues"
     }
@@ -181,11 +184,11 @@ const appData = {
     level: "intermediário",
     city: "São Paulo, SP",
     gender: "masculino",
-    age: 35,
+    birthDate: "1996-03-20",
     stats: {
       activitiesJoined: 24,
       distanceCovered: 185,
-      friendsMade: 12
+      connections: 12
     },
     history: [
       { activity: "Corrida no Parque", date: daysFromNow(-6), type: "corrida" },
@@ -198,23 +201,23 @@ const appData = {
     {
       id: 1,
       type: "invite",
-      title: "Novo convite para atividade",
-      message: "Ana Silva te convidou para 'Corrida Matinal no Parque'",
+      title: "Novo convite",
+      message: "Ana Silva te convidou para 'Vôlei de Praia'",
       timestamp: "2 h",
       read: false
     },
     {
       id: 2,
       type: "reminder",
-      title: "Lembrete de atividade",
-      message: "Sua atividade 'Yoga ao Ar Livre' começa em 1 hora",
+      title: "Lembrete de evento",
+      message: "'Corrida Matinal no Parque' é amanhã às 06:00",
       timestamp: "1 h",
       read: false
     },
     {
       id: 3,
       type: "update",
-      title: "Atividade cancelada",
+      title: "Evento cancelado",
       message: "Infelizmente 'Futebol no Parque' foi cancelado devido ao mau tempo",
       timestamp: "1 d",
       read: true
@@ -224,6 +227,7 @@ const appData = {
   chats: [
     {
       id: 1,
+      activityId: 1,
       groupName: "Corrida Matinal no Parque",
       type: "corrida",
       lastMessage: "Ana: Nos vemos às 6h na entrada principal!",
@@ -232,9 +236,10 @@ const appData = {
     },
     {
       id: 2,
-      groupName: "Yoga ao Ar Livre",
-      type: "yoga",
-      lastMessage: "Maria: Que sessão incrível hoje!",
+      activityId: 3,
+      groupName: "Pedalada Urbana",
+      type: "ciclismo",
+      lastMessage: "Maria: Quem precisar, tenho bike extra!",
       timestamp: "08:45",
       unread: 0
     }
@@ -251,10 +256,9 @@ const appData = {
   ],
 
   genderOptions: [
-    {value: "todos", label: "Todos", icon: "⚥"},
-    {value: "masculino", label: "Masculino", icon: "♂️"},
-    {value: "feminino", label: "Feminino", icon: "♀️"},
-    {value: "misto", label: "Misto", icon: "👥"}
+    {value: "todos", label: "Aberto a todos", icon: "👥"},
+    {value: "masculino", label: "Só masculino", icon: "♂️"},
+    {value: "feminino", label: "Só feminino", icon: "♀️"}
   ],
 
   ageRanges: [
@@ -350,7 +354,7 @@ function updateBadges() {
   bellBadge.hidden = unreadNotifications === 0;
   bellBadge.textContent = unreadNotifications;
 
-  const unreadChats = appData.chats.reduce((sum, chat) => sum + chat.unread, 0);
+  const unreadChats = visibleChats().reduce((sum, chat) => sum + chat.unread, 0);
   const chatBadge = document.getElementById('chatBadge');
   chatBadge.hidden = unreadChats === 0;
   chatBadge.textContent = unreadChats;
@@ -381,11 +385,17 @@ function handleRegister(event) {
   const confirmPassword = document.getElementById('confirmPassword').value;
   const city = document.getElementById('registerCity').value.trim();
   const level = document.getElementById('registerLevel').value;
+  const birthDate = document.getElementById('registerBirthDate').value;
   const gender = document.getElementById('registerGender').value;
   const acceptTerms = document.getElementById('acceptTerms').checked;
 
-  if (!name || !email || !password || !confirmPassword || !city || !level || !gender) {
+  if (!name || !email || !password || !confirmPassword || !city || !level || !birthDate || !gender) {
     showMessage('Por favor, preencha todos os campos.', 'error');
+    return;
+  }
+
+  if (birthDate >= toISODate(new Date())) {
+    showMessage('Informe uma data de nascimento válida.', 'error');
     return;
   }
 
@@ -404,16 +414,23 @@ function handleRegister(event) {
     return;
   }
 
+  // A brand-new account has no sign-ups; drop the sample user's ones
+  appData.activities.forEach(activity => {
+    if (activity.joined) activity.participants--;
+    activity.joined = false;
+  });
+
   enterApp({
     ...appData.user,
     name,
     email,
     city,
     level,
+    birthDate,
     gender,
     bio: 'Novo no FitConnect 👋',
     preferences: [],
-    stats: { activitiesJoined: 0, distanceCovered: 0, friendsMade: 0 },
+    stats: { activitiesJoined: 0, distanceCovered: 0, connections: 0 },
     history: []
   }, `Conta criada! Bem-vindo, ${firstName(name)}!`);
 }
@@ -465,10 +482,54 @@ function renderHome() {
   loadActivityFeed();
 }
 
+// Requirements (docs/SPEC.md §3)
+const levelOrder = ['iniciante', 'intermediário', 'avançado'];
+
+function ageOf(birthDate) {
+  const birth = parseISODate(birthDate);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  if (today < new Date(today.getFullYear(), birth.getMonth(), birth.getDate())) age--;
+  return age;
+}
+
+function ageInRange(age, range) {
+  if (range === 'todas') return true;
+  if (range.endsWith('+')) return age >= parseInt(range, 10);
+  const [min, max] = range.split('-').map(Number);
+  return age >= min && age <= max;
+}
+
+// Returns the first requirement the user does not meet, or null if they may join.
+// Requirements never apply to the event's organizer.
+function unmetRequirement(activity, user) {
+  if (activity.isHost) return null;
+  if (levelOrder.indexOf(user.level) < levelOrder.indexOf(activity.level)) {
+    return `Exige nível ${activity.level} ou acima`;
+  }
+  if (!ageInRange(ageOf(user.birthDate), activity.ageRange)) {
+    return `Exige idade entre ${getAgeLabel(activity.ageRange)}`;
+  }
+  if (activity.gender !== 'todos' && activity.gender !== user.gender) {
+    return `Evento ${getGenderLabel(activity.gender).toLowerCase()}`;
+  }
+  return null;
+}
+
+function isCancelled(activity) {
+  return activity.status === 'cancelado';
+}
+
+// Feed and search only show public, upcoming, non-cancelled events the user can join (SPEC §4.1)
 function upcomingActivities() {
   const today = toISODate(new Date());
   return appData.activities
-    .filter(activity => activity.date >= today)
+    .filter(activity =>
+      activity.date >= today &&
+      !isCancelled(activity) &&
+      activity.visibility !== 'privado' &&
+      !unmetRequirement(activity, state.user)
+    )
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 }
 
@@ -481,11 +542,11 @@ function loadActivityFeed() {
   );
 
   document.getElementById('homeCount').textContent =
-    `${activities.length} ${activities.length === 1 ? 'atividade' : 'atividades'}`;
+    `${activities.length} ${activities.length === 1 ? 'evento' : 'eventos'}`;
   renderActivityList(feedContainer, activities, {
     emoji: '🗓️',
     title: 'Nada por aqui ainda',
-    text: 'Que tal criar a primeira atividade dessa categoria?'
+    text: 'Que tal criar o primeiro evento dessa modalidade?'
   });
 }
 
@@ -534,11 +595,11 @@ function createActivityCard(activity) {
         <span class="capacity-text">${activity.participants}/${activity.maxParticipants} · ${spots > 0 ? `${spots} ${spots === 1 ? 'vaga' : 'vagas'}` : 'Lotada'}</span>
       </div>
       <div class="card-tags">
-        <span class="tag">${getGenderIcon(activity.gender)} ${getGenderLabel(activity.gender)}</span>
-        <span class="tag">${shortAgeLabel(activity.ageRange)}</span>
+        ${activity.visibility === 'privado' ? '<span class="tag tag--private">🔒 Privado</span>' : ''}
+        <span class="tag">${getGenderIcon(activity.gender)} ${shortAgeLabel(activity.ageRange)}</span>
       </div>
     </div>
-    ${activity.joined ? `<span class="joined-pill">${icon('check')} ${activity.isHost ? 'Você organiza' : 'Inscrito'}</span>` : ''}
+    ${activity.isHost || activity.joined ? `<span class="joined-pill">${icon('check')} ${activity.isHost ? 'Você organiza' : 'Inscrito'}</span>` : ''}
   `;
 
   return card;
@@ -608,10 +669,10 @@ function matchesTimeOfDay(time, period) {
 
 function loadSearchResults() {
   const resultsContainer = document.getElementById('searchResults');
-  if (!resultsContainer) return;
+  if (!resultsContainer || !state.user) return;
 
   const term = normalize(state.search.trim());
-  const { type, time, level, gender, age } = state.filters;
+  const { type, time, level } = state.filters;
 
   const results = upcomingActivities().filter(activity => {
     if (term && ![activity.title, activity.description, activity.location, activity.host]
@@ -619,8 +680,6 @@ function loadSearchResults() {
     if (type.length && !type.includes(activity.type)) return false;
     if (time.length && !time.some(period => matchesTimeOfDay(activity.time, period))) return false;
     if (level.length && !level.includes(activity.level)) return false;
-    if (gender.length && !gender.includes(activity.gender)) return false;
-    if (age.length && !age.includes(activity.ageRange)) return false;
     return true;
   });
 
@@ -630,11 +689,11 @@ function loadSearchResults() {
   filterCount.textContent = activeCount;
 
   document.getElementById('resultsCount').textContent =
-    `${results.length} ${results.length === 1 ? 'atividade encontrada' : 'atividades encontradas'}`;
+    `${results.length} ${results.length === 1 ? 'evento encontrado' : 'eventos encontrados'}`;
 
   renderActivityList(resultsContainer, results, {
     emoji: '🔍',
-    title: 'Nenhuma atividade encontrada',
+    title: 'Nenhum evento encontrado',
     text: 'Tente ajustar os filtros ou termos de busca.'
   });
 }
@@ -653,22 +712,53 @@ function renderActivityDetail(activityId) {
   const type = getActivityType(activity.type);
   const spots = activity.maxParticipants - activity.participants;
   const fill = Math.round((activity.participants / activity.maxParticipants) * 100);
+  const unmet = unmetRequirement(activity, state.user);
+  const cancelled = isCancelled(activity);
+  const isPrivate = activity.visibility === 'privado';
 
   let primaryAction;
-  if (activity.isHost) {
-    primaryAction = `<button class="btn btn--secondary btn--lg" disabled>${icon('check')} Você organiza</button>`;
+  if (cancelled) {
+    primaryAction = `<button class="btn btn--outline btn--lg" disabled>Evento cancelado</button>`;
+  } else if (activity.isHost) {
+    primaryAction = `<button class="btn btn--danger-ghost btn--lg" onclick="cancelEvent(${activity.id})">Cancelar evento</button>`;
   } else if (activity.joined) {
-    primaryAction = `<button class="btn btn--outline btn--lg" onclick="toggleJoin(${activity.id})">Cancelar inscrição</button>`;
+    primaryAction = `<button class="btn btn--outline btn--lg" onclick="toggleJoin(${activity.id})">Desistir</button>`;
+  } else if (unmet) {
+    primaryAction = `<button class="btn btn--primary btn--lg" disabled>Você não cumpre os requisitos</button>`;
   } else if (spots <= 0) {
-    primaryAction = `<button class="btn btn--primary btn--lg" disabled>Atividade lotada</button>`;
+    primaryAction = `<button class="btn btn--primary btn--lg" disabled>Evento lotado</button>`;
   } else {
     primaryAction = `<button class="btn btn--primary btn--lg" onclick="toggleJoin(${activity.id})">Participar</button>`;
   }
 
+  // Only the organizer and current participants are in the group conversation (SPEC §8.1)
+  const chatAction = (activity.isHost || activity.joined) && !cancelled
+    ? `<button class="btn btn--outline btn--lg btn--icon" onclick="openActivityChat(${activity.id})" aria-label="Conversa do grupo">${icon('chat')}</button>`
+    : '';
+
+  const hostNote = activity.isHost && !activity.joined
+    ? '<p class="muted host-note">Você organiza sem ocupar vaga.</p>'
+    : '';
+
+  const inviteBox = isPrivate && activity.isHost && !cancelled ? `
+      <div class="panel invite-box">
+        <h3>🔒 Link de convite</h3>
+        <p class="muted">Este evento é privado: só entra quem recebe este link.</p>
+        <code class="invite-link">${escapeHtml(inviteLink(activity))}</code>
+        <div class="invite-actions">
+          <button class="btn btn--secondary" onclick="copyInviteLink(${activity.id})">Copiar link</button>
+          <button class="btn btn--outline" onclick="regenerateInviteLink(${activity.id})">Gerar novo</button>
+        </div>
+      </div>` : '';
+
   detailContainer.innerHTML = `
     <div class="detail-hero" style="--type-color:${type.color}">${type.icon}</div>
     <div class="detail-body">
-      <span class="level-badge lvl-${levelSlug(activity.level)}">${escapeHtml(capitalize(activity.level))}</span>
+      ${cancelled ? '<div class="notice notice--danger">Este evento foi cancelado pelo organizador.</div>' : ''}
+      <div class="detail-badges">
+        <span class="level-badge lvl-${levelSlug(activity.level)}">${escapeHtml(capitalize(activity.level))}${activity.level === 'avançado' ? '' : '+'}</span>
+        ${isPrivate ? '<span class="tag tag--private">🔒 Privado</span>' : ''}
+      </div>
       <h1 class="detail-title">${escapeHtml(activity.title)}</h1>
 
       <div class="host-row">
@@ -688,10 +778,16 @@ function renderActivityDetail(activityId) {
           <span class="info-icon">${icon('pin')}</span>
           <div><small>Onde</small>${escapeHtml(activity.location)}</div>
         </div>
-        <div class="info-item">
-          <span class="info-icon">${getGenderIcon(activity.gender)}</span>
-          <div><small>Público</small>${getGenderLabel(activity.gender)} · ${getAgeLabel(activity.ageRange)}</div>
+      </div>
+
+      <div class="detail-section">
+        <h3>Requisitos</h3>
+        <div class="requirements">
+          <span class="tag">${icon('chart')} ${escapeHtml(capitalize(activity.level))}${activity.level === 'avançado' ? '' : ' ou acima'}</span>
+          <span class="tag">${icon('calendar')} ${getAgeLabel(activity.ageRange)}</span>
+          <span class="tag">${getGenderIcon(activity.gender)} ${getGenderLabel(activity.gender)}</span>
         </div>
+        ${unmet && !cancelled ? `<div class="notice">${escapeHtml(unmet)}: você não pode se inscrever.</div>` : ''}
       </div>
 
       <div class="detail-section">
@@ -699,16 +795,19 @@ function renderActivityDetail(activityId) {
         <p class="detail-description">${escapeHtml(activity.description)}</p>
       </div>
 
+      ${inviteBox}
+
       <div class="detail-capacity">
         <div class="detail-capacity-head">
           <strong>${activity.participants} de ${activity.maxParticipants} participantes</strong>
-          <span class="muted">${spots > 0 ? `${spots} ${spots === 1 ? 'vaga' : 'vagas'}` : 'Lotada'}</span>
+          <span class="muted">${spots > 0 ? `${spots} ${spots === 1 ? 'vaga' : 'vagas'}` : 'Lotado'}</span>
         </div>
         <div class="capacity-bar${spots <= 0 ? ' is-full' : ''}"><span style="width:${fill}%"></span></div>
       </div>
+      ${hostNote}
     </div>
     <div class="detail-cta">
-      <button class="btn btn--outline btn--lg btn--icon" onclick="openActivityChat(${activity.id})" aria-label="Chat do grupo">${icon('chat')}</button>
+      ${chatAction}
       ${primaryAction}
     </div>
   `;
@@ -718,14 +817,18 @@ function renderActivityDetail(activityId) {
 
 function toggleJoin(activityId) {
   const activity = findActivity(activityId);
-  if (!activity || activity.isHost) return;
+  if (!activity || activity.isHost || isCancelled(activity)) return;
 
+  const unmet = unmetRequirement(activity, state.user);
   if (activity.joined) {
     activity.joined = false;
     activity.participants--;
-    showMessage('Inscrição cancelada.', 'info');
+    showMessage('Você desistiu do evento.', 'info');
+  } else if (unmet) {
+    showMessage(`${unmet}.`, 'error');
+    return;
   } else if (activity.participants >= activity.maxParticipants) {
-    showMessage('Esta atividade está lotada.', 'error');
+    showMessage('Este evento está lotado.', 'error');
     return;
   } else {
     activity.joined = true;
@@ -736,8 +839,44 @@ function toggleJoin(activityId) {
   renderActivityDetail(activityId);
 }
 
+function cancelEvent(activityId) {
+  const activity = findActivity(activityId);
+  if (!activity || !activity.isHost || isCancelled(activity)) return;
+  if (!confirm(`Cancelar "${activity.title}"? Os participantes serão avisados.`)) return;
+
+  activity.status = 'cancelado';
+  showMessage('Evento cancelado. Os participantes foram avisados.', 'info');
+  renderActivityDetail(activityId);
+}
+
+// Private events: invite link (SPEC §6.2, §6.3)
+function newInviteToken() {
+  return Math.random().toString(36).slice(2, 10);
+}
+
+function inviteLink(activity) {
+  const base = location.protocol.startsWith('http') ? location.href.split('#')[0] : 'https://fitconnect.app/';
+  return `${base}#convite/${activity.id}/${activity.inviteToken}`;
+}
+
+function copyInviteLink(activityId) {
+  const link = inviteLink(findActivity(activityId));
+  const copied = navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject();
+  copied
+    .then(() => showMessage('Link de convite copiado!', 'success'))
+    .catch(() => showMessage('Não foi possível copiar. Selecione o link e copie manualmente.', 'error'));
+}
+
+function regenerateInviteLink(activityId) {
+  const activity = findActivity(activityId);
+  if (!activity || !activity.isHost) return;
+  activity.inviteToken = newInviteToken();
+  showMessage('Novo link gerado. O anterior não funciona mais.', 'info');
+  renderActivityDetail(activityId);
+}
+
 function openActivityChat(activityId) {
-  showMessage('O chat do grupo está em desenvolvimento!', 'info');
+  showMessage('A conversa do grupo está em desenvolvimento!', 'info');
 }
 
 // Profile Functions
@@ -747,14 +886,15 @@ function loadUserProfile() {
 
   document.getElementById('profileAvatar').textContent = initials(user.name);
   document.getElementById('profileName').textContent = user.name;
-  document.getElementById('profileMeta').textContent = `📍 ${user.city} · ${capitalize(user.level)}`;
+  document.getElementById('profileMeta').textContent =
+    `📍 ${user.city} · ${capitalize(user.level)} · ${ageOf(user.birthDate)} anos`;
   document.getElementById('profileBio').textContent = user.bio;
 
   const joinedNow = appData.activities.filter(a => a.joined).length;
   document.getElementById('profileStats').innerHTML = `
-    <div class="stat-item"><span class="stat-number">${user.stats.activitiesJoined + joinedNow}</span><span class="stat-label">Atividades</span></div>
+    <div class="stat-item"><span class="stat-number">${user.stats.activitiesJoined + joinedNow}</span><span class="stat-label">Eventos</span></div>
     <div class="stat-item"><span class="stat-number">${user.stats.distanceCovered}</span><span class="stat-label">Km percorridos</span></div>
-    <div class="stat-item"><span class="stat-number">${user.stats.friendsMade}</span><span class="stat-label">Amigos</span></div>
+    <div class="stat-item"><span class="stat-number">${user.stats.connections}</span><span class="stat-label">Conexões</span></div>
   `;
 
   const preferenceTags = document.getElementById('preferenceTags');
@@ -772,7 +912,7 @@ function loadUserProfile() {
   const activityHistory = document.getElementById('activityHistory');
   activityHistory.innerHTML = '';
   if (user.history.length === 0) {
-    activityHistory.innerHTML = '<p class="muted">Suas atividades concluídas aparecerão aqui.</p>';
+    activityHistory.innerHTML = '<p class="muted">Os eventos realizados de que você participou aparecerão aqui.</p>';
   }
   user.history.forEach(item => {
     const type = getActivityType(item.type);
@@ -790,13 +930,33 @@ function loadUserProfile() {
 }
 
 // Chat Functions
+// Group conversations belong to the organizer and current participants only (SPEC §8)
+function visibleChats() {
+  return appData.chats.filter(chat => {
+    const activity = findActivity(chat.activityId);
+    return activity && (activity.isHost || activity.joined);
+  });
+}
+
 function loadChatList() {
   const chatList = document.getElementById('chatList');
   if (!chatList) return;
 
   chatList.innerHTML = '';
 
-  appData.chats.forEach(chat => {
+  const chats = visibleChats();
+  if (chats.length === 0) {
+    chatList.innerHTML = `
+      <div class="empty-state">
+        <div class="emoji">💬</div>
+        <h3>Nenhuma conversa ainda</h3>
+        <p>Participe de um evento para entrar na conversa do grupo.</p>
+      </div>
+    `;
+    return;
+  }
+
+  chats.forEach(chat => {
     const type = getActivityType(chat.type);
     const chatItem = document.createElement('button');
     chatItem.className = 'list-item';
@@ -821,7 +981,7 @@ function loadChatList() {
 }
 
 function openChat(chatId) {
-  showMessage('Conversas individuais em desenvolvimento!', 'info');
+  showMessage('A conversa do grupo está em desenvolvimento!', 'info');
 }
 
 // Notifications Functions
@@ -900,6 +1060,8 @@ function handleCreateActivity(event) {
   }
 
   const type = document.getElementById('activityType').value;
+  const hostParticipates = document.getElementById('hostParticipates').checked;
+  const visibility = document.getElementById('activityVisibility').value;
   const newActivity = {
     id: Math.max(0, ...appData.activities.map(a => a.id)) + 1,
     title: document.getElementById('activityTitle').value.trim(),
@@ -907,21 +1069,25 @@ function handleCreateActivity(event) {
     date,
     time: document.getElementById('activityTime').value,
     location: document.getElementById('activityLocation').value.trim(),
-    participants: 1, // Creator is first participant
+    participants: hostParticipates ? 1 : 0, // The organizer takes a spot only if they participate
     maxParticipants: parseInt(document.getElementById('maxParticipants').value, 10),
     level: document.getElementById('activityLevel').value,
     gender: document.getElementById('activityGender').value,
     ageRange: document.getElementById('activityAge').value,
     description: document.getElementById('activityDescription').value.trim(),
     host: state.user ? state.user.name : 'Usuário',
-    joined: true,
-    isHost: true
+    joined: hostParticipates,
+    isHost: true,
+    visibility,
+    inviteToken: visibility === 'privado' ? newInviteToken() : null
   };
 
   appData.activities.unshift(newActivity);
 
   closeCreateActivity();
-  showMessage('Atividade publicada! 🎉', 'success');
+  showMessage(visibility === 'privado'
+    ? 'Evento privado criado! Compartilhe o link de convite.'
+    : 'Evento publicado! 🎉', 'success');
   showActivityDetail(newActivity.id);
 }
 
@@ -991,7 +1157,7 @@ function getGenderIcon(gender) {
 
 function getGenderLabel(gender) {
   const genderOption = appData.genderOptions.find(g => g.value === gender);
-  return genderOption ? genderOption.label : 'Todos';
+  return genderOption ? genderOption.label : 'Aberto a todos';
 }
 
 function getAgeLabel(ageRange) {
