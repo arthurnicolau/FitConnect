@@ -145,7 +145,8 @@ button {
   color: #FFFFFF;
 }
 
-@media (min-width: 600px) {
+/* Phone frame only for desktop browsers (mouse), never on tablets or inside the native app */
+@media (min-width: 600px) and (hover: hover) and (pointer: fine) {
   body {
     display: flex;
     align-items: center;
@@ -229,7 +230,7 @@ button {
 }
 
 .welcome.active {
-  padding: 2rem 1.5rem calc(1.5rem + var(--safe-bottom));
+  padding: calc(2rem + var(--safe-top)) 1.5rem calc(1.5rem + var(--safe-bottom));
 }
 
 .welcome-hero {
@@ -285,7 +286,7 @@ button {
 }
 
 .auth-top {
-  padding: 1rem 1.25rem 1.75rem;
+  padding: calc(1rem + var(--safe-top)) 1.25rem 1.75rem;
 }
 
 .auth-intro {

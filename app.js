@@ -277,6 +277,7 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 function initializeApp() {
   initializeSearch();
   startStatusClock();
+  registerServiceWorker();
 
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') closeCreateActivity();
@@ -1184,6 +1185,14 @@ function showMessage(message, type = 'info') {
     toast.classList.add('leaving');
     toast.addEventListener('animationend', () => toast.remove(), { once: true });
   }, 2600);
+}
+
+// Offline support for the installed web app (PWA). Native builds (Capacitor)
+// already ship the files inside the app, so they skip it.
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator) || window.Capacitor?.isNativePlatform?.()) return;
+  if (!location.protocol.startsWith('http')) return;
+  navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
 // Simulated phone status bar clock (desktop preview)
